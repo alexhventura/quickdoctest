@@ -11,8 +11,12 @@ export function getAdSenseSlot() {
   return (import.meta.env.VITE_ADSENSE_SLOT || '').trim();
 }
 
+export function getGoogleClientId() {
+  return (import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim();
+}
+
 export function isGoogleAuthConfigured() {
-  return Boolean((import.meta.env.VITE_GOOGLE_CLIENT_ID || '').trim());
+  return Boolean(getGoogleClientId());
 }
 
 export function isEmailJsConfigured() {

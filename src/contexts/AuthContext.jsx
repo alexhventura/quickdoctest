@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { fireConfetti } from '@/lib/confetti';
+import { getGoogleClientId, isGoogleAuthConfigured } from '@/lib/env';
 import {
   clearStoredUser,
   loadStoredUser,
@@ -17,7 +18,7 @@ import {
 
 const AuthContext = createContext(null);
 
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_ID = getGoogleClientId();
 
 function AuthStateProvider({ children }) {
   const [user, setUser] = useState(() => loadStoredUser());
@@ -53,15 +54,19 @@ function AuthStateProvider({ children }) {
 }
 
 export function AuthProvider({ children }) {
-  if (!GOOGLE_CLIENT_ID) {
-    if (!import.meta.env.PROD) {
+  if (!isGoogleAuthConfigured()) {
+    if (import.meta.env.DEV) {
       console.warn('[QuickDoc] VITE_GOOGLE_CLIENT_ID ausente — usando modo dev.');
+    } else {
+      console.warn(
+        '[QuickDoc] VITE_GOOGLE_CLIENT_ID não definido na Vercel — login Google desativado.',
+      );
     }
     return <AuthStateProvider>{children}</AuthStateProvider>;
   }
 
   return (
-    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID} locale="auto">
       <AuthStateProvider>{children}</AuthStateProvider>
     </GoogleOAuthProvider>
   );

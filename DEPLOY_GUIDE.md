@@ -66,11 +66,31 @@ Or use Vercel nameservers if you prefer full DNS at Vercel.
 
 1. Add both hostnames in Vercel → Domains and wait for **Valid Configuration**.
 2. Enable **HTTPS** (automatic on Vercel).
-3. Confirm `https://www.quickdoctest.com` loads and `/pt`, `/en`, `/es` work.
+3. Confirm `https://www.quickdoctest.com` loads, `/` redireciona para `/pt`, `/en` ou `/es`, e `quickdoctest.com` aponta para `www`.
 
 ---
 
-## 4. Google Analytics 4 **(manual)**
+## 4. Google OAuth (login / certificado) **(manual)**
+
+O botão Google só aparece ativo se `VITE_GOOGLE_CLIENT_ID` estiver definido na Vercel **e** as origens estiverem autorizadas no Google Cloud.
+
+1. [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services** → **Credentials**.
+2. Crie ou edite um **OAuth 2.0 Client ID** do tipo **Web application**.
+3. Em **Authorized JavaScript origins**, adicione **todas**:
+   - `http://localhost:5173`
+   - `https://www.quickdoctest.com`
+   - `https://quickdoctest.com`
+   - `https://quickdoctest.vercel.app` (preview deployments)
+4. Para Google Identity Services (botão `@react-oauth/google`) **não** é necessário redirect URI — só as origens acima.
+5. Copie o **Client ID** (formato `xxxxx.apps.googleusercontent.com`).
+6. Na Vercel → Environment Variables → `VITE_GOOGLE_CLIENT_ID` = Client ID → **Redeploy**.
+7. Teste em produção: DevTools → Console não deve mostrar erros de CSP ou `origin_mismatch`.
+
+Se aparecer *"Google login unavailable"* em produção, a variável não foi aplicada no build (confira Production + redeploy).
+
+---
+
+## 5. Google Analytics 4 **(manual)**
 
 1. [analytics.google.com](https://analytics.google.com) → Admin → **Create property** for QuickDocTest.
 2. Create a **Web** data stream for `https://www.quickdoctest.com`.
@@ -82,7 +102,7 @@ Implementation: `src/lib/analytics.js` + `AnalyticsBootstrap` (no hardcoded IDs)
 
 ---
 
-## 5. Google Search Console **(manual)**
+## 6. Google Search Console **(manual)**
 
 1. [search.google.com/search-console](https://search.google.com/search-console) → add property **URL prefix**: `https://www.quickdoctest.com`.
 2. Choose **HTML tag** verification.
@@ -94,7 +114,7 @@ Implementation: `src/lib/analytics.js` + `AnalyticsBootstrap` (no hardcoded IDs)
 
 ---
 
-## 6. Google AdSense **(manual)**
+## 7. Google AdSense **(manual)**
 
 The app shows **placeholders only** (no publisher IDs in code):
 

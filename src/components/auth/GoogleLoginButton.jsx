@@ -3,22 +3,24 @@ import { GoogleLogin } from '@react-oauth/google';
 import { LogIn } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useI18n } from '@/contexts/I18nContext';
-
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+import { isGoogleAuthConfigured } from '@/lib/env';
 
 function GoogleLoginButton() {
   const { handleGoogleSuccess } = useAuth();
   const { t } = useI18n();
 
-  if (!GOOGLE_CLIENT_ID) {
-    if (import.meta.env.PROD) {
-      return (
-        <span className="text-[10px] text-amber-500 px-2 max-w-[140px] text-center">
-          {t('googleLoginUnavailable')}
-        </span>
-      );
+  if (!isGoogleAuthConfigured()) {
+    if (import.meta.env.DEV) {
+      return <DevLoginFallback label={t('googleLogin')} />;
     }
-    return <DevLoginFallback label={t('googleLogin')} />;
+    return (
+      <span
+        className="text-[10px] text-amber-500 px-2 max-w-[160px] text-center leading-tight"
+        title="Defina VITE_GOOGLE_CLIENT_ID na Vercel e origens autorizadas no Google Cloud Console"
+      >
+        {t('googleLoginUnavailable')}
+      </span>
+    );
   }
 
   return (
@@ -26,11 +28,13 @@ function GoogleLoginButton() {
       <GoogleLogin
         onSuccess={handleGoogleSuccess}
         onError={() => console.warn('[QuickDoc] Google login cancelado ou falhou')}
+        useOneTap={false}
         theme="outline"
         size="medium"
         text="signin_with"
         shape="pill"
-        width="200"
+        width={200}
+        locale={document.documentElement.lang || 'en'}
       />
     </div>
   );
