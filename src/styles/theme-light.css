@@ -1,0 +1,179 @@
+/**
+ * Modo claro — texto azul legível em fundos claros
+ */
+
+:root:not(.dark),
+html:not(.dark) {
+  --qd-text-primary: #1e40af;
+  --qd-text-secondary: #2563eb;
+  --qd-text-muted: #3b82f6;
+  --qd-border: rgb(30 64 175 / 0.15);
+  --qd-surface-muted: #eff6ff;
+  color: #1e40af;
+}
+
+/* HUD */
+:root:not(.dark) .qd-hud-label,
+html:not(.dark) .qd-hud-label {
+  color: #3b82f6;
+}
+
+:root:not(.dark) .qd-hud-value,
+html:not(.dark) .qd-hud-value {
+  color: #1e40af;
+}
+
+:root:not(.dark) .qd-hud-value--accent,
+html:not(.dark) .qd-hud-value--accent {
+  color: #2563eb;
+}
+
+/* Duração */
+:root:not(.dark) .qd-duration-group,
+html:not(.dark) .qd-duration-group {
+  background: #eff6ff;
+  border: 1px solid var(--qd-border);
+}
+
+:root:not(.dark) .qd-duration-btn,
+html:not(.dark) .qd-duration-btn {
+  color: #3b82f6;
+}
+
+:root:not(.dark) .qd-duration-btn:hover,
+html:not(.dark) .qd-duration-btn:hover {
+  color: #1e40af;
+  background: rgb(37 99 235 / 0.1);
+}
+
+:root:not(.dark) .qd-test-hint,
+html:not(.dark) .qd-test-hint {
+  color: #2563eb;
+}
+
+/* Botões ghost */
+.qd-btn-ghost {
+  color: var(--qd-text-primary, #1e40af);
+  border-color: var(--qd-border, rgb(30 64 175 / 0.15));
+  background: transparent;
+}
+
+.dark .qd-btn-ghost {
+  color: #f4f4f5;
+  border-color: rgb(255 255 255 / 0.1);
+}
+
+.qd-btn-ghost:hover {
+  border-color: rgb(37 99 235 / 0.35);
+  background: rgb(37 99 235 / 0.06);
+}
+
+.dark .qd-btn-ghost:hover {
+  border-color: rgb(255 255 255 / 0.2);
+  background: rgb(255 255 255 / 0.06);
+}
+
+/* Utilitários de texto */
+:root:not(.dark) .qd-text-readable,
+html:not(.dark) .qd-text-readable {
+  color: #2563eb !important;
+  opacity: 1 !important;
+}
+
+:root:not(.dark) .qd-text-subtle,
+html:not(.dark) .qd-text-subtle {
+  color: #3b82f6 !important;
+  opacity: 1 !important;
+}
+
+:root:not(.dark) .qd-light-muted,
+html:not(.dark) .qd-light-muted {
+  color: #60a5fa !important;
+}
+
+/* Tailwind cinzas/claros → azul no modo claro (evita branco em fundo branco) */
+:root:not(.dark) .text-slate-400,
+:root:not(.dark) .text-slate-500,
+:root:not(.dark) .text-slate-600,
+:root:not(.dark) .text-zinc-400,
+html:not(.dark) .text-slate-400,
+html:not(.dark) .text-slate-500,
+html:not(.dark) .text-slate-600,
+html:not(.dark) .text-zinc-400 {
+  color: #2563eb !important;
+}
+
+:root:not(.dark) .text-slate-700,
+:root:not(.dark) .text-slate-800,
+:root:not(.dark) .text-slate-900,
+html:not(.dark) .text-slate-700,
+html:not(.dark) .text-slate-800,
+html:not(.dark) .text-slate-900 {
+  color: #1e40af !important;
+}
+
+/* Botão certificado A4 — texto branco no modo claro */
+:root:not(.dark) .qd-cert-menu-btn,
+html:not(.dark) .qd-cert-menu-btn,
+:root:not(.dark) .qd-cert-menu-btn span,
+html:not(.dark) .qd-cert-menu-btn span,
+:root:not(.dark) .qd-cert-menu-btn svg,
+html:not(.dark) .qd-cert-menu-btn svg {
+  color: #ffffff !important;
+}
+
+/* text-white só em fundos escuros; em cards claros vira azul */
+:root:not(.dark) .text-white:not(.qd-cert-menu-btn):not(.bg-blue-600):not(.bg-blue-700):not(.bg-emerald-600):not(.bg-emerald-700):not(.bg-zinc-700):not([class*="bg-blue"]):not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-green"]),
+html:not(.dark) .text-white:not(.qd-cert-menu-btn):not(.bg-blue-600):not(.bg-blue-700):not(.bg-emerald-600):not(.bg-emerald-700):not(.bg-zinc-700):not([class*="bg-blue"]):not([class*="bg-emerald"]):not([class*="bg-red"]):not([class*="bg-green"]) {
+  color: #1e40af !important;
+}
+
+/* Modal de certificado */
+.qd-cert-modal-root {
+  pointer-events: auto;
+  isolation: isolate;
+}
+
+/* Header */
+:root:not(.dark) header.border-b,
+html:not(.dark) header.border-b {
+  border-color: rgb(30 64 175 / 0.1) !important;
+}
+
+/* Menu de idioma */
+:root:not(.dark) .qd-lang-option--active,
+html:not(.dark) .qd-lang-option--active {
+  color: #1d4ed8;
+  background: rgb(37 99 235 / 0.12);
+}
+
+/* Rank banner */
+:root:not(.dark) .qd-rank-label,
+html:not(.dark) .qd-rank-label {
+  color: inherit;
+  opacity: 1;
+}
+
+:root:not(.dark) .qd-rank-desc,
+html:not(.dark) .qd-rank-desc {
+  opacity: 1;
+  color: inherit;
+}
+
+/* Popup AdSense — título legível */
+:root:not(.dark) .qd-ad-popup-title,
+html:not(.dark) .qd-ad-popup-title {
+  color: #1e40af;
+}
+
+/* Título da tela de análise */
+:root:not(.dark) .qd-results-title,
+html:not(.dark) .qd-results-title {
+  color: #1d4ed8 !important;
+}
+
+/* Valores numéricos nos cards de estatísticas — preto no modo claro */
+:root:not(.dark) .qd-stat-value,
+html:not(.dark) .qd-stat-value {
+  color: #000000 !important;
+}
