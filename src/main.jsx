@@ -5,6 +5,16 @@ import './index.css';
 import App from './App.jsx';
 import AppProviders from '@/providers/AppProviders';
 
+/** Remove SW legado (não usamos PWA offline) que pode servir HTML/JS antigo */
+if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then((regs) => {
+    regs.forEach((reg) => reg.unregister());
+  });
+  if ('caches' in window) {
+    caches.keys().then((keys) => keys.forEach((key) => caches.delete(key)));
+  }
+}
+
 const savedTheme = localStorage.getItem('qd_theme') || 'dark';
 document.documentElement.classList.toggle('dark', savedTheme === 'dark');
 document.documentElement.lang =

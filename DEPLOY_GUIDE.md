@@ -130,6 +130,17 @@ When approved:
 
 ---
 
+## Tela branca / CSP (troubleshooting)
+
+Se o site abrir em branco após um deploy:
+
+1. **Hard refresh** no navegador: `Ctrl+Shift+R` (Windows) ou limpar cache do site.
+2. Confirme que `vercel.json` é JSON válido e foi deployado (CSP e cache separados para `/assets/*` vs HTML).
+3. O projeto **não registra Service Worker**; `main.jsx` remove SW/cache legados na primeira visita.
+4. `index.html` e rotas SPA (`/en`, `/pt`, …) usam `Cache-Control: no-cache` — assets em `/assets/*` mantêm hash e cache longo.
+
+---
+
 ## Post-deploy checklist **(manual)**
 
 - [ ] `npm run build` succeeds locally
