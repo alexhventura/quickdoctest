@@ -18,13 +18,10 @@ export default function App() {
     <BrowserRouter>
       <AnalyticsBootstrap />
       <Routes>
+        {/* Raiz: idioma do navegador → /pt | /en | /es */}
         <Route path="/" element={<LocaleRedirect />} />
-        <Route path="/:lang" element={<LocaleShell />}>
-          <Route index element={<QuickDocApp />} />
-          <Route path="terms" element={<TermsOfUse />} />
-          <Route path="privacy" element={<PrivacyPolicy />} />
-          <Route path="instructions" element={<TestInstructions />} />
-        </Route>
+
+        {/* Legado antes de /:lang para não capturar "terms" como idioma */}
         {LEGACY_REDIRECTS.map(([from, to]) => (
           <Route
             key={from}
@@ -32,6 +29,13 @@ export default function App() {
             element={<Navigate to={`/en/${to}`} replace />}
           />
         ))}
+
+        <Route path="/:lang" element={<LocaleShell />}>
+          <Route index element={<QuickDocApp />} />
+          <Route path="terms" element={<TermsOfUse />} />
+          <Route path="privacy" element={<PrivacyPolicy />} />
+          <Route path="instructions" element={<TestInstructions />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

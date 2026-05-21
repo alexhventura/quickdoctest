@@ -1,18 +1,25 @@
+import { useMemo } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import {
   buildLocalePath,
-  detectBrowserLanguage,
-  shouldRedirectFromRoot,
+  languageFromTag,
 } from '@/utils/locale/detectBrowserLanguage';
 
-/** Fallback React: `/` → `/{lang}` (o redirect principal ocorre antes no HTML/edge). */
+/**
+ * Redireciona "/" → /pt, /en ou /es conforme navigator.language.
+ * Montado apenas na rota raiz — não redireciona de /pt|/en|/es (sem loop).
+ */
 export default function LocaleRedirect() {
-  const { pathname, search, hash } = useLocation();
+  const { search, hash } = useLocation();
 
-  if (!shouldRedirectFromRoot(pathname)) {
-    return <Navigate to="/en" replace />;
-  }
+  const to = useMemo(() => {
+    const tag =
+      typeof navigator !== 'undefined'
+        ? navigator.language || navigator.languages?.[0] || 'en'
+        : 'en';
+    const lang = languageFromTag(tag);
+    return buildLocalePath(lang, { search, hash });
+  }, [search, hash]);
 
-  const lang = detectBrowserLanguage({ preferStored: true });
-  return <Navigate to={buildLocalePath(lang, { search, hash })} replace />;
+  return <Navigate to={to} replace />;
 }
