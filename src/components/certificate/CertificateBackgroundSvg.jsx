@@ -24,21 +24,43 @@ function loadImage(src) {
 }
 
 function drawCertificateFrame(ctx, width, height) {
-  ctx.fillStyle = '#ffffff';
+  // Fundo azul premium em gradiente
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  gradient.addColorStop(0, '#020617'); // slate-950
+  gradient.addColorStop(0.45, '#0b1f3b');
+  gradient.addColorStop(1, '#111827'); // slate-900
+  ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, width, height);
 
-  ctx.strokeStyle = '#123D6D';
-  ctx.lineWidth = 16;
-  ctx.strokeRect(8, 8, width - 16, height - 16);
+  // Auréola circular direita (glassmorphism leve)
+  const radial = ctx.createRadialGradient(
+    width * 0.85,
+    height * 0.5,
+    width * 0.05,
+    width * 0.85,
+    height * 0.5,
+    width * 0.4,
+  );
+  radial.addColorStop(0, 'rgba(56,189,248,0.22)');
+  radial.addColorStop(1, 'rgba(15,23,42,0)');
+  ctx.fillStyle = radial;
+  ctx.beginPath();
+  ctx.arc(width * 0.85, height * 0.5, width * 0.45, 0, Math.PI * 2);
+  ctx.fill();
 
-  ctx.strokeStyle = '#A8B4C7';
+  // Bordas internas em tons claros para manter moldura premium
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.9)';
+  ctx.lineWidth = 14;
+  ctx.strokeRect(10, 10, width - 20, height - 20);
+
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
   ctx.lineWidth = 1.4;
-  ctx.strokeRect(36, 36, width - 72, height - 72);
+  ctx.strokeRect(40, 40, width - 80, height - 80);
 
   ctx.setLineDash([7, 6]);
-  ctx.strokeStyle = '#D7DEE8';
+  ctx.strokeStyle = 'rgba(148, 163, 184, 0.22)';
   ctx.lineWidth = 1;
-  ctx.strokeRect(46, 46, width - 92, height - 92);
+  ctx.strokeRect(52, 52, width - 104, height - 104);
   ctx.setLineDash([]);
 }
 
@@ -101,31 +123,70 @@ function CertificateBackgroundSvg() {
         }}
         aria-hidden
       >
+        <defs>
+          <linearGradient
+            id="qd-cert-bg"
+            x1="0"
+            y1="0"
+            x2={A4_LANDSCAPE.width}
+            y2={A4_LANDSCAPE.height}
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop offset="0" stopColor="#020617" />
+            <stop offset="0.45" stopColor="#0b1f3b" />
+            <stop offset="1" stopColor="#111827" />
+          </linearGradient>
+          <radialGradient
+            id="qd-cert-orbit"
+            cx="85%"
+            cy="50%"
+            r="45%"
+          >
+            <stop offset="0" stopColor="#38bdf8" stopOpacity="0.22" />
+            <stop offset="1" stopColor="#020617" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
         <rect
-          x="8"
-          y="8"
-          width={A4_LANDSCAPE.width - 16}
-          height={A4_LANDSCAPE.height - 16}
+          x="0"
+          y="0"
+          width={A4_LANDSCAPE.width}
+          height={A4_LANDSCAPE.height}
+          fill="url(#qd-cert-bg)"
+        />
+
+        <circle
+          cx={A4_LANDSCAPE.width * 0.85}
+          cy={A4_LANDSCAPE.height * 0.5}
+          r={A4_LANDSCAPE.width * 0.45}
+          fill="url(#qd-cert-orbit)"
+        />
+
+        <rect
+          x="10"
+          y="10"
+          width={A4_LANDSCAPE.width - 20}
+          height={A4_LANDSCAPE.height - 20}
           fill="none"
-          stroke="#123D6D"
-          strokeWidth="16"
+          stroke="rgba(148,163,184,0.9)"
+          strokeWidth="14"
         />
         <rect
-          x="36"
-          y="36"
-          width={A4_LANDSCAPE.width - 72}
-          height={A4_LANDSCAPE.height - 72}
+          x="40"
+          y="40"
+          width={A4_LANDSCAPE.width - 80}
+          height={A4_LANDSCAPE.height - 80}
           fill="none"
-          stroke="#A8B4C7"
+          stroke="rgba(148,163,184,0.35)"
           strokeWidth="1.4"
         />
         <rect
-          x="46"
-          y="46"
-          width={A4_LANDSCAPE.width - 92}
-          height={A4_LANDSCAPE.height - 92}
+          x="52"
+          y="52"
+          width={A4_LANDSCAPE.width - 104}
+          height={A4_LANDSCAPE.height - 104}
           fill="none"
-          stroke="#D7DEE8"
+          stroke="rgba(148,163,184,0.22)"
           strokeWidth="1"
           strokeDasharray="7 6"
         />

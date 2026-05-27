@@ -1,7 +1,5 @@
 import { jsPDF } from 'jspdf';
-import QRCode from 'qrcode';
-import { generateValidationUrl } from '@/utils/formatting/validationUrl';
-import { getCertificateMetrics } from '@/utils/certificate/certificateMetrics';
+import { getCertificateMetrics, getCertificateSerial } from '@/utils/certificate/certificateMetrics';
 import {
   A4_LANDSCAPE,
   CERT_CARD_MM,
@@ -55,7 +53,7 @@ export async function buildCertificatePdf({ user, results, copy }) {
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
   const name = user?.name || copy.anonymous;
   const metrics = copy.metrics || getCertificateMetrics(results, {});
-  const url = generateValidationUrl(results, user);
+  const serial = getCertificateSerial(results);
   const cx = PAGE_MM.w / 2;
   const contentW = PAGE_MM.w - 2 * M;
   const L = CERT_LAYOUT_MM;
@@ -186,21 +184,25 @@ export async function buildCertificatePdf({ user, results, copy }) {
   pdf.setFontSize(6.5);
   pdf.text(copy.issuedOn, cx, contentY(L.footerIssued + 4), { align: 'center' });
 
-  try {
-    const qr = await QRCode.toDataURL(url, {
-      width: 112,
-      margin: 1,
-      color: { dark: CERT_COLORS.navy, light: '#ffffff00' },
-    });
-    const qs = 14;
-    pdf.addImage(qr, 'PNG', cx - qs / 2, contentY(L.footerQr), qs, qs);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(5.5);
-    setText(pdf, CERT_COLORS.navy);
-    pdf.text(copy.auth, cx, contentY(L.footerAuth + 3), { align: 'center' });
-  } catch {
-    /* QR opcional */
-  }
+  // Cartão de serial e validação minimalista
+  const serialCardW = Math.min(70, contentW * 0.5);
+  const serialCardX = cx - serialCardW / 2;
+  const serialCardY = contentY(L.footerAuth);
+  const serialCardH = 12;
+
+  fillGlassRect(pdf, serialCardX, serialCardY, serialCardW, serialCardH, 1.8);
+
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(5.3);
+  setText(pdf, CERT_COLORS.grayMid);
+  pdf.text(`Serial`, serialCardX + 3, serialCardY + 4.6);
+
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(7);
+  setText(pdf, CERT_COLORS.navy);
+  pdf.text(serial, serialCardX + serialCardW - 2, serialCardY + 7.5, {
+    align: 'right',
+  });
 
   return pdf;
 }

@@ -1,8 +1,6 @@
 import { forwardRef, memo, useMemo } from 'react';
-import { QRCodeSVG } from 'qrcode.react';
 import { useI18n } from '@/contexts/I18nContext';
-import { generateValidationUrl } from '@/utils/formatting/validationUrl';
-import { getCertificateMetrics, getCertificateRankLabel } from '@/utils/certificate/certificateMetrics';
+import { getCertificateMetrics, getCertificateRankLabel, getCertificateSerial } from '@/utils/certificate/certificateMetrics';
 import {
   A4_LANDSCAPE,
   CERT_COLORS,
@@ -131,63 +129,123 @@ function MetricsCard({ metrics }) {
   );
 }
 
-function AuthFooter({ validationUrl, issuedOn, authLabel, siteLabel }) {
+function InfoCards({ issuedOn, durationLabel, serial, validationHint }) {
+  const cardBase = {
+    borderRadius: 12,
+    padding: '10px 14px',
+    border: '1px solid rgba(148,163,184,0.45)',
+    background:
+      'linear-gradient(135deg, rgba(15,23,42,0.85), rgba(15,23,42,0.4))',
+    boxShadow: '0 12px 30px rgba(15,23,42,0.35)',
+    backdropFilter: 'blur(12px)',
+    minWidth: 150,
+  };
+
   return (
     <div
       style={{
-        ...sectionStyle,
-        width: 260,
-        margin: '0 auto',
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 12,
+        justifyContent: 'center',
       }}
     >
-      <div
-        style={{
-          fontSize: CERT_TYPE.footerBrand.size,
-          fontWeight: CERT_TYPE.footerBrand.weight,
-          color: CERT_COLORS.navy,
-          letterSpacing: '0.02em',
-          textTransform: 'none',
-        }}
-      >
-        {siteLabel}
+      <div style={cardBase}>
+        <div
+          style={{
+            fontSize: 10,
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            color: CERT_COLORS.white,
+            opacity: 0.8,
+          }}
+        >
+          Date
+        </div>
+        <div
+          style={{
+            marginTop: 4,
+            fontSize: 13,
+            fontWeight: 600,
+            color: CERT_COLORS.white,
+          }}
+        >
+          {issuedOn}
+        </div>
       </div>
 
-      <div
-        style={{
-          marginTop: 4,
-          fontSize: CERT_TYPE.footerMeta.size,
-          color: CERT_COLORS.grayMid,
-        }}
-      >
-        {issuedOn}
+      <div style={cardBase}>
+        <div
+          style={{
+            fontSize: 10,
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            color: CERT_COLORS.white,
+            opacity: 0.8,
+          }}
+        >
+          Duration
+        </div>
+        <div
+          style={{
+            marginTop: 4,
+            fontSize: 13,
+            fontWeight: 600,
+            color: CERT_COLORS.white,
+          }}
+        >
+          {durationLabel}
+        </div>
       </div>
 
-      <div
-        style={{
-          marginTop: 10,
-          padding: 6,
-        }}
-      >
-        <QRCodeSVG
-          value={validationUrl}
-          size={54}
-          level="H"
-          fgColor={CERT_COLORS.navy}
-          bgColor="transparent"
-        />
+      <div style={cardBase}>
+        <div
+          style={{
+            fontSize: 10,
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            color: CERT_COLORS.white,
+            opacity: 0.8,
+          }}
+        >
+          Serial
+        </div>
+        <div
+          style={{
+            marginTop: 4,
+            fontSize: 13,
+            fontWeight: 700,
+            fontFamily: 'monospace',
+            color: CERT_COLORS.white,
+          }}
+        >
+          {serial}
+        </div>
       </div>
 
-      <div
-        style={{
-          marginTop: 6,
-          fontSize: CERT_TYPE.footerAuth.size,
-          fontWeight: CERT_TYPE.footerAuth.weight,
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
-          color: CERT_COLORS.navy,
-        }}
-      >
-        {authLabel}
+      <div style={cardBase}>
+        <div
+          style={{
+            fontSize: 10,
+            letterSpacing: '0.16em',
+            textTransform: 'uppercase',
+            color: CERT_COLORS.white,
+            opacity: 0.8,
+          }}
+        >
+          Validation
+        </div>
+        <div
+          style={{
+            marginTop: 4,
+            fontSize: 12,
+            fontWeight: 500,
+            color: CERT_COLORS.white,
+            opacity: 0.9,
+          }}
+        >
+          {validationHint}
+        </div>
       </div>
     </div>
   );
@@ -198,8 +256,6 @@ const CertificateDocument = forwardRef(function CertificateDocument(
   ref,
 ) {
   const { t } = useI18n();
-
-  const validationUrl = generateValidationUrl(results, user);
 
   const displayName = user?.name || t('certAnonymous');
 
@@ -218,6 +274,11 @@ const CertificateDocument = forwardRef(function CertificateDocument(
       }),
     [results, t],
   );
+
+  const serial = getCertificateSerial(results);
+  const issuedOn = t('certIssuedOn', { date: results.timestamp });
+  const durationLabel = t('testDurationLabel') + ` · ${results.testDuration || 30}s`;
+  const validationHint = 'Store this serial with your test ID to verify in the future.';
 
   return (
     <div
@@ -268,7 +329,7 @@ const CertificateDocument = forwardRef(function CertificateDocument(
               margin: 0,
               fontSize: CERT_TYPE.brand.size,
               fontWeight: CERT_TYPE.brand.weight,
-              color: CERT_COLORS.navy,
+              color: CERT_COLORS.white,
             }}
           >
             {t('certBrandTitle')}
@@ -278,7 +339,7 @@ const CertificateDocument = forwardRef(function CertificateDocument(
             style={{
               marginTop: CERT_SPACE.titleToSubtitle,
               fontSize: CERT_TYPE.subtitle.size,
-              color: CERT_COLORS.grayDark,
+              color: CERT_COLORS.white,
             }}
           >
             {t('certTitle')}
@@ -288,7 +349,7 @@ const CertificateDocument = forwardRef(function CertificateDocument(
             style={{
               marginTop: CERT_SPACE.subtitleToMeta,
               fontSize: CERT_TYPE.meta.size,
-              color: CERT_COLORS.grayMid,
+              color: CERT_COLORS.white,
             }}
           >
             {t('certStandard', {
@@ -309,7 +370,7 @@ const CertificateDocument = forwardRef(function CertificateDocument(
               margin: 0,
               fontSize: CERT_TYPE.certify.size,
               fontStyle: 'italic',
-              color: CERT_COLORS.grayMid,
+              color: CERT_COLORS.white,
             }}
           >
             {t('certSubtitle')}
@@ -320,7 +381,7 @@ const CertificateDocument = forwardRef(function CertificateDocument(
               marginTop: CERT_SPACE.certifyToName,
               fontSize: nameSize,
               fontWeight: 700,
-              color: CERT_COLORS.navy,
+              color: CERT_COLORS.white,
               lineHeight: 1.05,
             }}
           >
@@ -332,7 +393,7 @@ const CertificateDocument = forwardRef(function CertificateDocument(
               marginTop: 10,
               fontSize: CERT_TYPE.level.size,
               fontWeight: CERT_TYPE.level.weight,
-              color: CERT_COLORS.grayDark,
+              color: CERT_COLORS.white,
             }}
           >
             {t('certRankLine', { rank: rankLabel })}
@@ -345,12 +406,25 @@ const CertificateDocument = forwardRef(function CertificateDocument(
 
         <MetricsCard metrics={metrics} />
 
-        <AuthFooter
-          validationUrl={validationUrl}
-          issuedOn={t('certIssuedOn', { date: results.timestamp })}
-          authLabel={t('certAuth')}
-          siteLabel={t('certSiteUrl')}
+        <InfoCards
+          issuedOn={issuedOn}
+          durationLabel={durationLabel}
+          serial={serial}
+          validationHint={validationHint}
         />
+
+        <div
+          style={{
+            marginTop: 10,
+            fontSize: 11,
+            color: CERT_COLORS.white,
+            opacity: 0.8,
+            letterSpacing: '0.08em',
+            textTransform: 'uppercase',
+          }}
+        >
+          {t('certSiteUrl')}
+        </div>
       </div>
     </div>
   );

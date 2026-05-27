@@ -27,6 +27,16 @@ export function getCertificateMetrics(results, labels = {}) {
   };
 }
 
+/** Serial determinístico baseado no timestamp do resultado (recomputável no futuro) */
+export function getCertificateSerial(results) {
+  const tsRaw = results?.timestamp;
+  const ts = tsRaw ? new Date(tsRaw).getTime() || Date.now() : Date.now();
+  const date = new Date(ts);
+  const year = date.getUTCFullYear();
+  const seq = String(ts % 1000000).padStart(6, '0');
+  return `QDT-${year}-${seq}`;
+}
+
 export function getCertificateMetricsRows(results, labels = {}) {
   const m = getCertificateMetrics(results, labels);
   return [
