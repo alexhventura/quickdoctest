@@ -4,8 +4,8 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import '@/i18n';
 import i18n from '@/i18n';
+import qtLogoUrl from '@/assets/QT_V2.png';
 import { CertificateDocumentInner, A4_LANDSCAPE } from '@/components/certificate/CertificateDocument';
-import { getCertificatePreview } from '@/components/certificate/certificatePreviewRegistry';
 import { buildCertificateTemplateModel } from '@/components/certificate/certificateTemplate';
 import { PAGE_MM } from '@/constants/certificateLayout';
 
@@ -42,84 +42,48 @@ function translateForLang(lang) {
   return (key, opts = {}) => i18n.t(key, { lng: lang, ...opts });
 }
 
-function syncClonedImages(sourceRoot, cloneRoot) {
-  const sourceImgs = sourceRoot.querySelectorAll('img');
-  const cloneImgs = cloneRoot.querySelectorAll('img');
-  cloneImgs.forEach((img, index) => {
-    const source = sourceImgs[index];
-    if (!source?.src) return;
-    img.src = source.src;
-    img.crossOrigin = 'anonymous';
-  });
+let exportLogoDataUrlPromise = null;
+
+/** Logo em data URL evita falhas de CORS/taint no html2canvas */
+async function getExportLogoDataUrl() {
+  if (exportLogoDataUrlPromise) return exportLogoDataUrlPromise;
+  exportLogoDataUrlPromise = fetch(qtLogoUrl)
+    .then((response) => {
+      if (!response.ok) throw new Error('Failed to load certificate logo');
+      return response.blob();
+    })
+    .then(
+      (blob) =>
+        new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(String(reader.result || qtLogoUrl));
+          reader.onerror = () => reject(reader.error || new Error('Failed to read logo'));
+          reader.readAsDataURL(blob);
+        }),
+    )
+    .catch(() => qtLogoUrl);
+  return exportLogoDataUrlPromise;
 }
 
-/** Elemento A4 interno (841×595) dentro de `.certificate-page` */
-function getPageCaptureTarget(pageRoot) {
-  return pageRoot.firstElementChild || pageRoot;
+function getPageCaptureTarget(pageEl) {
+  return pageEl.firstElementChild || pageEl;
 }
 
-/**
- * Clona a página da prévia para área de captura 1:1 (sem scale do modal)
- * e rasteriza com html2canvas.
- */
-async function capturePageElement(pageEl) {
-  const staging = document.createElement('div');
-  staging.setAttribute('data-qd-cert-capture', '1');
-  staging.style.cssText = [
+function applyCaptureHostStyles(host) {
+  const top = typeof window !== 'undefined' ? window.innerHeight + 8 : 0;
+  host.style.cssText = [
     'position:fixed',
     'left:0',
-    'top:0',
+    'top:' + top + 'px',
     'width:' + A4_LANDSCAPE.width + 'px',
-    'height:' + A4_LANDSCAPE.height + 'px',
-    'opacity:0.01',
+    'opacity:1',
     'pointer-events:none',
-    'z-index:2147483646',
-    'overflow:hidden',
+    'z-index:2147483647',
+    'overflow:visible',
   ].join(';');
-
-  const clone = pageEl.cloneNode(true);
-  syncClonedImages(pageEl, clone);
-  staging.appendChild(clone);
-  document.body.appendChild(staging);
-
-  try {
-    await waitImages(staging);
-    await document.fonts?.ready;
-
-    const target = getPageCaptureTarget(clone);
-    const canvas = await html2canvas(target, {
-      backgroundColor: '#ffffff',
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      logging: false,
-      scrollX: 0,
-      scrollY: 0,
-      imageTimeout: 20000,
-    });
-
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
-    if (!dataUrl || dataUrl.length < 200) {
-      throw new Error('Certificate page capture produced empty image');
-    }
-    return dataUrl;
-  } finally {
-    staging.remove();
-  }
 }
 
-async function capturePagesFromContainer(container) {
-  const pages = Array.from(container.querySelectorAll('.certificate-page'));
-  if (pages.length === 0) throw new Error('Certificate pages not found');
-
-  const dataUrls = [];
-  for (const pageEl of pages) {
-    dataUrls.push(await capturePageElement(pageEl));
-  }
-  return dataUrls;
-}
-
-async function mountOffScreenCertificate({ user, results, copy, lang }) {
+async function mountExportCertificate({ user, results, copy, lang }) {
   const safeLang = lang || i18n.language || 'pt';
   await i18n.changeLanguage(safeLang);
 
@@ -127,32 +91,25 @@ async function mountOffScreenCertificate({ user, results, copy, lang }) {
   const host = document.createElement('div');
   host.id = 'qd-pdf-capture-host';
   host.setAttribute('aria-hidden', 'true');
-  host.style.cssText = [
-    'position:fixed',
-    'left:0',
-    'top:0',
-    'width:' + A4_LANDSCAPE.width + 'px',
-    'opacity:0.01',
-    'pointer-events:none',
-    'z-index:2147483645',
-    'overflow:hidden',
-  ].join(';');
+  applyCaptureHostStyles(host);
   document.body.appendChild(host);
 
   const t = translateForLang(safeLang);
   const model = buildCertificateTemplateModel({ results, user, copy, t });
+  const logoSrc = await getExportLogoDataUrl();
 
   const root = createRoot(host);
   root.render(
     createElement(CertificateDocumentInner, {
       model,
       previewStacked: false,
+      logoSrc,
     }),
   );
 
   await waitFrame();
   await waitFrame();
-  await waitMs(200);
+  await waitMs(250);
   await document.fonts?.ready;
 
   const container = host.querySelector('#certificado-container');
@@ -163,53 +120,57 @@ async function mountOffScreenCertificate({ user, results, copy, lang }) {
   }
 
   await waitImages(container);
-  return { host, root, container };
-}
 
-/**
- * Converte o certificado da prévia (se aberta) ou réplica off-screen em imagens para PDF.
- */
-async function renderCertificatePagesToDataUrls({ user, results, copy, lang }) {
-  if (typeof window === 'undefined') {
-    throw new Error('Certificate export requires browser environment');
-  }
-
-  const previewMeta = {
-    timestamp: results?.timestamp,
-    userEmail: user?.email,
-  };
-
-  const livePreview = getCertificatePreview(previewMeta);
-  if (livePreview) {
-    await waitImages(livePreview);
-    await document.fonts?.ready;
-    await waitMs(80);
-    return capturePagesFromContainer(livePreview);
-  }
-
-  const { host, root, container } = await mountOffScreenCertificate({
-    user,
-    results,
-    copy,
-    lang,
-  });
-
-  try {
-    return await capturePagesFromContainer(container);
-  } finally {
+  const pages = Array.from(container.querySelectorAll('.certificate-page'));
+  if (pages.length === 0) {
     root.unmount();
     host.remove();
+    throw new Error('Certificate pages not found');
   }
+
+  return { host, root, pages };
 }
 
-export async function buildCertificatePdf({ user, results, copy, lang }) {
-  const pageImages = await renderCertificatePagesToDataUrls({ user, results, copy, lang });
+async function rasterizePageElement(pageEl) {
+  const target = getPageCaptureTarget(pageEl);
+  const canvas = await html2canvas(target, {
+    backgroundColor: '#ffffff',
+    scale: 2,
+    useCORS: false,
+    allowTaint: false,
+    logging: false,
+    width: A4_LANDSCAPE.width,
+    height: A4_LANDSCAPE.height,
+    scrollX: 0,
+    scrollY: 0,
+    imageTimeout: 20000,
+  });
+
+  let dataUrl = '';
+  try {
+    dataUrl = canvas.toDataURL('image/png');
+  } catch {
+    dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+  }
+
+  if (!dataUrl || dataUrl.length < 200) {
+    throw new Error('Certificate page capture produced empty image');
+  }
+
+  return {
+    dataUrl,
+    format: dataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG',
+  };
+}
+
+async function buildPdfFromPages(pages) {
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
-  pageImages.forEach((imageData, index) => {
+  for (let index = 0; index < pages.length; index += 1) {
+    const { dataUrl, format } = await rasterizePageElement(pages[index]);
     if (index > 0) pdf.addPage('a4', 'landscape');
-    pdf.addImage(imageData, 'JPEG', 0, 0, PAGE_MM.w, PAGE_MM.h);
-  });
+    pdf.addImage(dataUrl, format, 0, 0, PAGE_MM.w, PAGE_MM.h);
+  }
 
   return pdf;
 }
@@ -242,32 +203,44 @@ function triggerBlobDownload(blob, filename) {
   }, 60_000);
 }
 
+export async function buildCertificatePdf({ user, results, copy, lang }) {
+  const { host, root, pages } = await mountExportCertificate({ user, results, copy, lang });
+  try {
+    return await buildPdfFromPages(pages);
+  } finally {
+    root.unmount();
+    host.remove();
+  }
+}
+
 export async function downloadCertificatePdfFile({ user, results, copy, lang }) {
   const filename = getCertificateFileName(user, results);
-  const pdf = await buildCertificatePdf({ user, results, copy, lang });
-  const blob = pdf.output('blob');
-
-  if (!blob || blob.size < 100) {
-    throw new Error('Generated PDF is empty');
-  }
-
-  if (isIOSSafari()) {
-    const blobUrl = URL.createObjectURL(blob);
-    const opened = window.open(blobUrl, '_blank', 'noopener,noreferrer');
-    if (!opened) {
-      triggerBlobDownload(blob, filename);
-    }
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
-    return { ok: true };
-  }
+  const { host, root, pages } = await mountExportCertificate({ user, results, copy, lang });
 
   try {
-    pdf.save(filename);
-  } catch {
-    triggerBlobDownload(blob, filename);
-  }
+    const pdf = await buildPdfFromPages(pages);
+    const blob = pdf.output('blob');
 
-  return { ok: true };
+    if (!blob || blob.size < 100) {
+      throw new Error('Generated PDF is empty');
+    }
+
+    if (isIOSSafari()) {
+      const blobUrl = URL.createObjectURL(blob);
+      const opened = window.open(blobUrl, '_blank', 'noopener,noreferrer');
+      if (!opened) {
+        triggerBlobDownload(blob, filename);
+      }
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+    } else {
+      triggerBlobDownload(blob, filename);
+    }
+
+    return { ok: true };
+  } finally {
+    root.unmount();
+    host.remove();
+  }
 }
 
 export async function getCertificatePdfBlob({ user, results, copy, lang }) {
