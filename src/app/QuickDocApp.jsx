@@ -6,7 +6,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { getThemeStyles } from '@/lib/theme';
 import { useTypingRealtimeEngine } from '@/hooks/useTypingRealtimeEngine';
 import { useSeo } from '@/hooks/useSeo';
-import AdPlaceholder from '@/components/ads/AdPlaceholder';
+import AdsenseBlock from '@/components/ads/AdsenseBlock';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
 import AdSidebar from '@/components/layout/AdSidebar';
@@ -80,6 +80,10 @@ export default function QuickDocApp() {
         </div>
 
         <section className="lg:col-span-3 flex flex-col justify-start">
+          <div className="mb-6">
+            <AdsenseBlock className="w-full" minHeight={100} />
+          </div>
+
           <AnimatePresence mode="sync">
             {typing.screen === 'teste' && (
               <motion.div
@@ -124,7 +128,7 @@ export default function QuickDocApp() {
                 transition={{ duration: 0.35 }}
               >
                 <div className="mb-6 flex justify-center">
-                  <AdPlaceholder variant="responsive" className="w-full max-w-2xl" />
+                  <AdsenseBlock className="w-full max-w-2xl" minHeight={120} />
                 </div>
                 <ResultsScreen
                   themeStyles={themeStyles}
@@ -164,7 +168,7 @@ export default function QuickDocApp() {
 
       <div className="qd-dim-when-focus px-4 pb-2">
         <div className="max-w-3xl mx-auto mb-3">
-          <AdPlaceholder variant="responsive" />
+          <AdsenseBlock minHeight={100} />
         </div>
         <Footer themeStyles={themeStyles} />
       </div>
