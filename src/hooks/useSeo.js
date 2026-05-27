@@ -52,13 +52,21 @@ function stripLocalePrefix(pathname) {
   return rest || '';
 }
 
-export function useSeo({ title, description, lang = 'en', faqItems = [] } = {}) {
+export function useSeo({
+  title,
+  description,
+  lang = 'en',
+  faqItems = [],
+  canonicalPath,
+} = {}) {
   const { pathname } = useLocation();
   const localeMeta = SEO_BY_LANG[lang] || SEO_BY_LANG.en;
   const pageTitle = title || localeMeta.title || DEFAULT_TITLE;
   const pageDescription = description || localeMeta.description || DEFAULT_DESCRIPTION;
   const suffixPath = stripLocalePrefix(pathname);
-  const canonicalUrl = `${SITE_URL}/${lang}${suffixPath}`;
+  const canonicalUrl = canonicalPath
+    ? `${SITE_URL}${canonicalPath.startsWith('/') ? canonicalPath : `/${canonicalPath}`}`
+    : `${SITE_URL}/${lang}${suffixPath}`;
 
   function upsertJsonLd(id, schema) {
     let script = document.querySelector(`script[data-qd-jsonld="${id}"]`);
@@ -175,6 +183,7 @@ export function useSeo({ title, description, lang = 'en', faqItems = [] } = {}) 
       document.querySelector('script[data-qd-jsonld="faq-page"]')?.remove();
     }
 
-    trackPageView(`/${lang}${suffixPath}`, pageTitle);
-  }, [pageTitle, pageDescription, canonicalUrl, lang, suffixPath, faqItems]);
+    const analyticsPath = canonicalPath || `/${lang}${suffixPath}`;
+    trackPageView(analyticsPath, pageTitle);
+  }, [pageTitle, pageDescription, canonicalUrl, lang, suffixPath, faqItems, canonicalPath]);
 }

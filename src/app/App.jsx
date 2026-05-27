@@ -9,6 +9,8 @@ import TestInstructions from '@/pages/legal/TestInstructions';
 import CompressPdfPage from '@/pages/seo/CompressPdfPage';
 import MergePdfPage from '@/pages/seo/MergePdfPage';
 import ExtractPdfTextPage from '@/pages/seo/ExtractPdfTextPage';
+import SeoSlugPage from '@/pages/seo/SeoSlugPage';
+import { SEO_PAGE_SLUGS } from '@/constants/seoPages';
 
 const LEGACY_REDIRECTS = [
   ['terms', 'terms'],
@@ -33,6 +35,10 @@ export default function App() {
           />
         ))}
 
+        {SEO_PAGE_SLUGS.map((slug) => (
+          <Route key={slug} path={`/${slug}`} element={<SeoSlugPage slug={slug} />} />
+        ))}
+
         <Route path="/:lang" element={<LocaleShell />}>
           <Route index element={<QuickDocApp />} />
           <Route path="terms" element={<TermsOfUse />} />
@@ -41,6 +47,9 @@ export default function App() {
           <Route path="compress-pdf" element={<CompressPdfPage />} />
           <Route path="merge-pdf" element={<MergePdfPage />} />
           <Route path="extract-pdf-text" element={<ExtractPdfTextPage />} />
+          {SEO_PAGE_SLUGS.map((slug) => (
+            <Route key={`${slug}-localized`} path={slug} element={<SeoSlugPage slug={slug} />} />
+          ))}
         </Route>
       </Routes>
     </BrowserRouter>

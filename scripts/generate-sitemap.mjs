@@ -13,12 +13,24 @@ const ROUTES = [
   '/merge-pdf',
   '/extract-pdf-text',
 ];
+
+/** Páginas SEO na raiz (canonical sem prefixo de idioma) */
+const SEO_SLUG_ROUTES = [
+  '/teste-digitacao-celular',
+  '/teste-digitacao-portugues',
+  '/typing-test-mobile',
+  '/como-melhorar-wpm',
+  '/certificado-digitacao',
+  '/teste-de-digitacao-online',
+  '/teste-de-velocidade-digitacao',
+  '/mobile-typing-speed-test',
+];
 const now = new Date().toISOString();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const outPath = path.join(__dirname, '..', 'public', 'sitemap.xml');
 
-const urls = LOCALES.flatMap((lang) =>
+const localeUrls = LOCALES.flatMap((lang) =>
   ROUTES.map((route) => {
     const loc = `${SITE_URL}/${lang}${route}`;
     const priority =
@@ -36,6 +48,30 @@ const urls = LOCALES.flatMap((lang) =>
   </url>`;
   }),
 );
+
+const seoUrls = SEO_SLUG_ROUTES.map((route) => {
+  const loc = `${SITE_URL}${route}`;
+  return `  <url>
+    <loc>${loc}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>`;
+});
+
+const localizedSeoUrls = LOCALES.flatMap((lang) =>
+  SEO_SLUG_ROUTES.map((route) => {
+    const loc = `${SITE_URL}/${lang}${route}`;
+    return `  <url>
+    <loc>${loc}</loc>
+    <lastmod>${now}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>`;
+  }),
+);
+
+const urls = [...localeUrls, ...seoUrls, ...localizedSeoUrls];
 
 const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
