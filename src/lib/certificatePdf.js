@@ -8,6 +8,8 @@ import qtLogoUrl from '@/assets/QT_V2.png';
 import { CertificateDocumentInner, A4_LANDSCAPE } from '@/components/certificate/CertificateDocument';
 import { buildCertificateTemplateModel } from '@/components/certificate/certificateTemplate';
 import { PAGE_MM } from '@/constants/certificateLayout';
+import { sanitizeCloneForPdfExport } from '@/lib/pdfColorSanitizer';
+import { createPdfExportFrame, destroyPdfExportFrame } from '@/lib/pdfExportFrame';
 
 function waitFrame() {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
@@ -69,36 +71,21 @@ function getPageCaptureTarget(pageEl) {
   return pageEl.firstElementChild || pageEl;
 }
 
-function applyCaptureHostStyles(host) {
-  const top = typeof window !== 'undefined' ? window.innerHeight + 8 : 0;
-  host.style.cssText = [
-    'position:fixed',
-    'left:0',
-    'top:' + top + 'px',
-    'width:' + A4_LANDSCAPE.width + 'px',
-    'opacity:1',
-    'pointer-events:none',
-    'z-index:2147483647',
-    'overflow:visible',
-  ].join(';');
-}
-
+/**
+ * Monta certificado em iframe isolado — sem Tailwind/CSS global (lab/oklch).
+ */
 async function mountExportCertificate({ user, results, copy, lang }) {
   const safeLang = lang || i18n.language || 'pt';
   await i18n.changeLanguage(safeLang);
 
-  document.getElementById('qd-pdf-capture-host')?.remove();
-  const host = document.createElement('div');
-  host.id = 'qd-pdf-capture-host';
-  host.setAttribute('aria-hidden', 'true');
-  applyCaptureHostStyles(host);
-  document.body.appendChild(host);
+  destroyPdfExportFrame();
+  const { mount } = await createPdfExportFrame();
 
   const t = translateForLang(safeLang);
   const model = buildCertificateTemplateModel({ results, user, copy, t });
   const logoSrc = await getExportLogoDataUrl();
 
-  const root = createRoot(host);
+  const root = createRoot(mount);
   root.render(
     createElement(CertificateDocumentInner, {
       model,
@@ -109,13 +96,15 @@ async function mountExportCertificate({ user, results, copy, lang }) {
 
   await waitFrame();
   await waitFrame();
-  await waitMs(250);
-  await document.fonts?.ready;
+  await waitMs(300);
+  if (mount.ownerDocument?.fonts?.ready) {
+    await mount.ownerDocument.fonts.ready;
+  }
 
-  const container = host.querySelector('#certificado-container');
+  const container = mount.querySelector('#certificado-container');
   if (!container) {
     root.unmount();
-    host.remove();
+    destroyPdfExportFrame();
     throw new Error('Certificate node not mounted');
   }
 
@@ -124,19 +113,29 @@ async function mountExportCertificate({ user, results, copy, lang }) {
   const pages = Array.from(container.querySelectorAll('.certificate-page'));
   if (pages.length === 0) {
     root.unmount();
-    host.remove();
+    destroyPdfExportFrame();
     throw new Error('Certificate pages not found');
   }
 
-  return { host, root, pages };
+  return { root, mount, pages };
+}
+
+function cleanupExportMount(root) {
+  try {
+    root.unmount();
+  } catch {
+    /* ignore */
+  }
+  destroyPdfExportFrame();
 }
 
 async function rasterizePageElement(pageEl) {
   const target = getPageCaptureTarget(pageEl);
+
   const canvas = await html2canvas(target, {
     backgroundColor: '#ffffff',
     scale: 2,
-    useCORS: false,
+    useCORS: true,
     allowTaint: false,
     logging: false,
     width: A4_LANDSCAPE.width,
@@ -144,6 +143,11 @@ async function rasterizePageElement(pageEl) {
     scrollX: 0,
     scrollY: 0,
     imageTimeout: 20000,
+    windowWidth: A4_LANDSCAPE.width,
+    windowHeight: A4_LANDSCAPE.height,
+    onclone: (clonedDoc) => {
+      sanitizeCloneForPdfExport(clonedDoc, 'qd-pdf-capture-host');
+    },
   });
 
   let dataUrl = '';
@@ -181,10 +185,6 @@ export function getCertificateFileName() {
   return CERTIFICATE_DOWNLOAD_FILENAME;
 }
 
-/**
- * Download robusto via Blob + URL.createObjectURL + <a download>.
- * iOS Safari: fallback com window.open se o popup não for bloqueado.
- */
 function savePdfBlobToDevice(blob, filename) {
   const url = URL.createObjectURL(blob);
 
@@ -204,39 +204,48 @@ function savePdfBlobToDevice(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+function assertValidPdfBlob(blob) {
+  if (!blob || blob.size === 0) {
+    console.error('[QuickDoc] Certificate PDF blob is empty (size=0)');
+    throw new Error('Generated PDF is empty');
+  }
+  if (blob.size < 100) {
+    console.error('[QuickDoc] Certificate PDF blob too small:', blob.size);
+    throw new Error('Generated PDF is invalid');
+  }
+}
+
 export async function buildCertificatePdf({ user, results, copy, lang }) {
-  const { host, root, pages } = await mountExportCertificate({ user, results, copy, lang });
+  const { root, pages } = await mountExportCertificate({ user, results, copy, lang });
   try {
     return await buildPdfFromPages(pages);
   } finally {
-    root.unmount();
-    host.remove();
+    cleanupExportMount(root);
   }
 }
 
 export async function downloadCertificatePdfFile({ user, results, copy, lang }) {
   const filename = getCertificateFileName();
-  const { host, root, pages } = await mountExportCertificate({ user, results, copy, lang });
+  const { root, pages } = await mountExportCertificate({ user, results, copy, lang });
 
   try {
     const pdf = await buildPdfFromPages(pages);
     const blob = pdf.output('blob');
-
-    if (!blob || blob.size < 100) {
-      throw new Error('Generated PDF is empty');
-    }
+    assertValidPdfBlob(blob);
 
     savePdfBlobToDevice(blob, filename);
 
     return { ok: true };
   } finally {
-    root.unmount();
-    host.remove();
+    cleanupExportMount(root);
   }
 }
 
 export async function getCertificatePdfBlob({ user, results, copy, lang }) {
-  return (await buildCertificatePdf({ user, results, copy, lang })).output('blob');
+  const pdf = await buildCertificatePdf({ user, results, copy, lang });
+  const blob = pdf.output('blob');
+  assertValidPdfBlob(blob);
+  return blob;
 }
 
 export async function getCertificatePdfBase64({ user, results, copy, lang }) {

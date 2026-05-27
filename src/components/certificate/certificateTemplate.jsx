@@ -1,4 +1,5 @@
 import { getCertificateMetricCards, getCertificateSerial } from '@/utils/certificate/certificateMetrics';
+import { PDF_COLORS, PDF_FONTS } from './certificatePdfStyles';
 
 export const CERTIFICATE_SIZE = {
   width: 841,
@@ -148,10 +149,10 @@ function MetricCard({ value, label }) {
   return (
     <div
       style={{
-        background: 'rgba(255,255,255,0.96)',
+        background: PDF_COLORS.cardBg,
         borderRadius: 14,
-        border: '1px solid rgba(148,163,184,0.35)',
-        boxShadow: '0 4px 16px rgba(15,23,42,0.07)',
+        border: `1px solid ${PDF_COLORS.cardBorder}`,
+        boxShadow: '0 4px 16px #e2e8f0',
         padding: '10px 8px',
         minWidth: 0,
         boxSizing: 'border-box',
@@ -163,7 +164,7 @@ function MetricCard({ value, label }) {
         style={{
           fontSize: 24,
           fontWeight: 800,
-          color: '#0f172a',
+          color: PDF_COLORS.slate900,
           lineHeight: 1.05,
           ...boundedText,
         }}
@@ -177,7 +178,7 @@ function MetricCard({ value, label }) {
           fontWeight: 700,
           letterSpacing: '0.1em',
           textTransform: 'uppercase',
-          color: '#64748b',
+          color: PDF_COLORS.slate500,
           lineHeight: 1.2,
           ...boundedText,
         }}
@@ -197,8 +198,8 @@ function CertificatePageFrame({ children }) {
         position: 'relative',
         overflow: 'hidden',
         boxSizing: 'border-box',
-        fontFamily: "'Inter', system-ui, sans-serif",
-        background: 'linear-gradient(145deg, #1e3a5f 0%, #2a5080 50%, #3d6a9e 100%)',
+        fontFamily: PDF_FONTS.body,
+        background: `linear-gradient(145deg, ${PDF_COLORS.navy700} 0%, ${PDF_COLORS.navy600} 50%, ${PDF_COLORS.navy500} 100%)`,
       }}
     >
       <div
@@ -206,7 +207,7 @@ function CertificatePageFrame({ children }) {
           position: 'absolute',
           inset: 12,
           borderRadius: 6,
-          border: '1px solid rgba(255,255,255,0.35)',
+          border: `1px solid ${PDF_COLORS.borderWhite}`,
           pointerEvents: 'none',
         }}
       />
@@ -215,8 +216,8 @@ function CertificatePageFrame({ children }) {
           position: 'absolute',
           inset: PAGE_MARGIN,
           borderRadius: 10,
-          background: 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)',
-          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9), 0 8px 32px rgba(15,23,42,0.12)',
+          background: `linear-gradient(180deg, ${PDF_COLORS.slate50} 0%, ${PDF_COLORS.slate100} 100%)`,
+          boxShadow: 'inset 0 1px 0 #ffffff, 0 8px 32px #e2e8f0',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -251,7 +252,7 @@ function FullHeader({ model, logoSrc }) {
           margin: 0,
           fontSize: 30,
           fontWeight: 800,
-          color: '#0f172a',
+          color: PDF_COLORS.slate900,
           letterSpacing: '-0.02em',
           lineHeight: 1.1,
           ...boundedText,
@@ -264,7 +265,7 @@ function FullHeader({ model, logoSrc }) {
           margin: '6px 0 0',
           fontSize: 17,
           fontWeight: 700,
-          color: '#1e293b',
+          color: PDF_COLORS.slate800,
           lineHeight: 1.15,
           ...boundedText,
         }}
@@ -276,7 +277,7 @@ function FullHeader({ model, logoSrc }) {
           margin: '6px 0 0',
           fontSize: ts.standard,
           fontWeight: 600,
-          color: '#475569',
+          color: PDF_COLORS.slate600,
           lineHeight: 1.25,
           ...boundedText,
         }}
@@ -289,7 +290,7 @@ function FullHeader({ model, logoSrc }) {
           fontSize: 14,
           fontWeight: 600,
           fontStyle: 'italic',
-          color: '#334155',
+          color: PDF_COLORS.slate700,
           ...boundedText,
         }}
       >
@@ -300,7 +301,7 @@ function FullHeader({ model, logoSrc }) {
           margin: '10px 0 0',
           fontSize: ts.name,
           fontWeight: 800,
-          color: '#0f172a',
+          color: PDF_COLORS.slate900,
           lineHeight: 1.08,
           ...boundedText,
         }}
@@ -313,7 +314,7 @@ function FullHeader({ model, logoSrc }) {
             margin: '4px 0 0',
             fontSize: ts.email,
             fontWeight: 500,
-            color: '#64748b',
+            color: PDF_COLORS.slate500,
             lineHeight: 1.2,
             ...boundedText,
           }}
@@ -326,7 +327,7 @@ function FullHeader({ model, logoSrc }) {
           margin: '10px 0 0',
           fontSize: 14,
           fontWeight: 700,
-          color: '#2563eb',
+          color: PDF_COLORS.blue600,
           lineHeight: 1.2,
           ...boundedText,
         }}
@@ -344,7 +345,7 @@ function ContinuationHeader({ model }) {
       style={{
         flexShrink: 0,
         paddingBottom: 12,
-        borderBottom: '1px solid #e2e8f0',
+        borderBottom: `1px solid ${PDF_COLORS.borderLight}`,
         marginBottom: 14,
       }}
     >
@@ -353,7 +354,7 @@ function ContinuationHeader({ model }) {
           margin: 0,
           fontSize: 11,
           fontWeight: 700,
-          color: '#64748b',
+          color: PDF_COLORS.slate500,
           letterSpacing: '0.04em',
           textTransform: 'uppercase',
           lineHeight: 1.3,
@@ -373,7 +374,7 @@ function PageFooter({ model }) {
         marginTop: 'auto',
         paddingTop: 14,
         flexShrink: 0,
-        borderTop: '1px solid #e2e8f0',
+        borderTop: `1px solid ${PDF_COLORS.borderLight}`,
       }}
     >
       <p
@@ -382,7 +383,7 @@ function PageFooter({ model }) {
           textAlign: 'center',
           fontSize: 13,
           fontWeight: 700,
-          color: '#334155',
+          color: PDF_COLORS.slate700,
           letterSpacing: '0.06em',
           ...boundedText,
         }}
@@ -404,7 +405,7 @@ function PageFooter({ model }) {
             margin: 0,
             fontSize: 10,
             fontWeight: 600,
-            color: '#64748b',
+            color: PDF_COLORS.slate500,
             flex: '1 1 auto',
             minWidth: 0,
             lineHeight: 1.3,
@@ -418,7 +419,7 @@ function PageFooter({ model }) {
             margin: 0,
             fontSize: 9,
             fontWeight: 500,
-            color: '#94a3b8',
+            color: PDF_COLORS.slate400,
             fontFamily: 'monospace',
             flex: '0 1 auto',
             textAlign: 'right',
