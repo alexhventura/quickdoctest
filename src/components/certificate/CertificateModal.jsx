@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
@@ -6,15 +6,32 @@ import { buildCertificateCopy } from '@/services/certificate/certificateCopy';
 import CertificateDocument, { A4_LANDSCAPE } from './CertificateDocument';
 import CertificateActions from './CertificateActions';
 import CertificatePreviewScaler from './CertificatePreviewScaler';
+import { setCertificatePreview } from './certificatePreviewRegistry';
 import { buildCertificateTemplateModel, paginateCertificatePages } from './certificateTemplate';
 
 export default function CertificateModal({ results, user, lang, onClose }) {
   const { t } = useI18n();
+  const previewRef = useRef(null);
   const copy = useMemo(() => buildCertificateCopy(t, results), [t, results]);
   const pageCount = useMemo(
     () => paginateCertificatePages(buildCertificateTemplateModel({ results, user, copy, t })).length,
     [results, user, copy, t],
   );
+
+  useEffect(() => {
+    const register = () => {
+      const node = previewRef.current;
+      if (node) {
+        setCertificatePreview(node, {
+          timestamp: results?.timestamp,
+          userEmail: user?.email,
+        });
+      }
+    };
+    register();
+    requestAnimationFrame(register);
+    return () => setCertificatePreview(null);
+  }, [results?.timestamp, user?.email, copy]);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -80,7 +97,13 @@ export default function CertificateModal({ results, user, lang, onClose }) {
 
         <div className="bg-white shadow-2xl rounded-md border border-slate-300 p-3 sm:p-4 mx-auto w-full">
           <CertificatePreviewScaler pageCount={pageCount}>
-            <CertificateDocument results={results} user={user} copy={copy} previewStacked />
+            <CertificateDocument
+              ref={previewRef}
+              results={results}
+              user={user}
+              copy={copy}
+              previewStacked
+            />
           </CertificatePreviewScaler>
         </div>
 

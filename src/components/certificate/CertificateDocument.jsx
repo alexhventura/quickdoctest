@@ -10,13 +10,11 @@ import {
 
 export const A4_LANDSCAPE = CERTIFICATE_SIZE;
 
-const CertificateDocument = forwardRef(function CertificateDocument(
-  { results, user, copy, previewStacked = true },
+export const CertificateDocumentInner = forwardRef(function CertificateDocumentInner(
+  { model, previewStacked = true, pageCount: pageCountProp },
   ref,
 ) {
-  const { t } = useI18n();
-  const model = buildCertificateTemplateModel({ results, user, copy, t });
-  const pageCount = paginateCertificatePages(model).length;
+  const pageCount = pageCountProp ?? paginateCertificatePages(model).length;
 
   return (
     <div
@@ -35,6 +33,24 @@ const CertificateDocument = forwardRef(function CertificateDocument(
     >
       <CertificateTemplate model={model} logoSrc={qtLogo} />
     </div>
+  );
+});
+
+const CertificateDocument = forwardRef(function CertificateDocument(
+  { results, user, copy, previewStacked = true },
+  ref,
+) {
+  const { t } = useI18n();
+  const model = buildCertificateTemplateModel({ results, user, copy, t });
+  const pageCount = paginateCertificatePages(model).length;
+
+  return (
+    <CertificateDocumentInner
+      ref={ref}
+      model={model}
+      previewStacked={previewStacked}
+      pageCount={pageCount}
+    />
   );
 });
 
