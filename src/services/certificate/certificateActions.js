@@ -7,8 +7,13 @@ import { getCertificateRankLabel } from '@/utils/certificate/certificateMetrics'
 export { buildCertificateCopy };
 
 export async function actionDownloadPdf({ user, results, copy, lang }) {
-  await downloadCertificatePdfFile({ user, results, copy, lang });
-  return { ok: true, action: 'download' };
+  try {
+    await downloadCertificatePdfFile({ user, results, copy, lang });
+    return { ok: true, action: 'download' };
+  } catch (err) {
+    console.error('[QuickDoc] Certificate PDF download failed:', err);
+    return { ok: false, reason: 'download_failed', detail: err?.message };
+  }
 }
 
 export async function actionSendEmail({ user, results, lang, copy }) {

@@ -171,6 +171,8 @@ function CertificateActions({
           setFeedback({ type: 'error', message: t('certEmailTemplate') });
         } else if (res.reason === 'cancelled') {
           setFeedback(null);
+        } else if (res.reason === 'download_failed') {
+          setFeedback({ type: 'error', message: t('certDownloadFailed') });
         } else {
           setFeedback({
             type: 'error',
