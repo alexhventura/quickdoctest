@@ -5,6 +5,7 @@ import { jsPDF } from 'jspdf';
 import '@/i18n';
 import i18n from '@/i18n';
 import { CertificateDocumentInner, A4_LANDSCAPE } from '@/components/certificate/CertificateDocument';
+import { getCertificatePreview } from '@/components/certificate/certificatePreviewRegistry';
 import { buildCertificateTemplateModel } from '@/components/certificate/certificateTemplate';
 import { PAGE_MM } from '@/constants/certificateLayout';
 
@@ -41,35 +42,70 @@ function translateForLang(lang) {
   return (key, opts = {}) => i18n.t(key, { lng: lang, ...opts });
 }
 
-/** Elemento A4 interno (841×595) dentro de `.certificate-page` */
-function getPageCaptureTarget(pageEl) {
-  const frame = pageEl.firstElementChild;
-  if (frame) return frame;
-  return pageEl;
+function syncClonedImages(sourceRoot, cloneRoot) {
+  const sourceImgs = sourceRoot.querySelectorAll('img');
+  const cloneImgs = cloneRoot.querySelectorAll('img');
+  cloneImgs.forEach((img, index) => {
+    const source = sourceImgs[index];
+    if (!source?.src) return;
+    img.src = source.src;
+    img.crossOrigin = 'anonymous';
+  });
 }
 
-async function capturePageElement(pageEl) {
-  const target = getPageCaptureTarget(pageEl);
-  const canvas = await html2canvas(target, {
-    backgroundColor: '#ffffff',
-    scale: 2,
-    useCORS: true,
-    allowTaint: true,
-    logging: false,
-    width: A4_LANDSCAPE.width,
-    height: A4_LANDSCAPE.height,
-    windowWidth: A4_LANDSCAPE.width,
-    windowHeight: A4_LANDSCAPE.height,
-    scrollX: 0,
-    scrollY: 0,
-    imageTimeout: 15000,
-  });
+/** Elemento A4 interno (841×595) dentro de `.certificate-page` */
+function getPageCaptureTarget(pageRoot) {
+  return pageRoot.firstElementChild || pageRoot;
+}
 
-  const dataUrl = canvas.toDataURL('image/png', 1);
-  if (!dataUrl || dataUrl.length < 200) {
-    throw new Error('Certificate page capture produced empty image');
+/**
+ * Clona a página da prévia para área de captura 1:1 (sem scale do modal)
+ * e rasteriza com html2canvas.
+ */
+async function capturePageElement(pageEl) {
+  const staging = document.createElement('div');
+  staging.setAttribute('data-qd-cert-capture', '1');
+  staging.style.cssText = [
+    'position:fixed',
+    'left:0',
+    'top:0',
+    'width:' + A4_LANDSCAPE.width + 'px',
+    'height:' + A4_LANDSCAPE.height + 'px',
+    'opacity:0.01',
+    'pointer-events:none',
+    'z-index:2147483646',
+    'overflow:hidden',
+  ].join(';');
+
+  const clone = pageEl.cloneNode(true);
+  syncClonedImages(pageEl, clone);
+  staging.appendChild(clone);
+  document.body.appendChild(staging);
+
+  try {
+    await waitImages(staging);
+    await document.fonts?.ready;
+
+    const target = getPageCaptureTarget(clone);
+    const canvas = await html2canvas(target, {
+      backgroundColor: '#ffffff',
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      logging: false,
+      scrollX: 0,
+      scrollY: 0,
+      imageTimeout: 20000,
+    });
+
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+    if (!dataUrl || dataUrl.length < 200) {
+      throw new Error('Certificate page capture produced empty image');
+    }
+    return dataUrl;
+  } finally {
+    staging.remove();
   }
-  return dataUrl;
 }
 
 async function capturePagesFromContainer(container) {
@@ -83,15 +119,7 @@ async function capturePagesFromContainer(container) {
   return dataUrls;
 }
 
-/**
- * Monta o mesmo CertificateDocument da prévia off-screen (visível ao renderer, fora da viewport)
- * e captura cada página para o PDF.
- */
-async function renderCertificatePagesToDataUrls({ user, results, copy, lang }) {
-  if (typeof window === 'undefined') {
-    throw new Error('Certificate export requires browser environment');
-  }
-
+async function mountOffScreenCertificate({ user, results, copy, lang }) {
   const safeLang = lang || i18n.language || 'pt';
   await i18n.changeLanguage(safeLang);
 
@@ -99,16 +127,14 @@ async function renderCertificatePagesToDataUrls({ user, results, copy, lang }) {
   const host = document.createElement('div');
   host.id = 'qd-pdf-capture-host';
   host.setAttribute('aria-hidden', 'true');
-  // Deve ficar na viewport (opacity ~0) — html2canvas falha com left:-10000px
   host.style.cssText = [
     'position:fixed',
     'left:0',
     'top:0',
     'width:' + A4_LANDSCAPE.width + 'px',
-    'height:auto',
     'opacity:0.01',
     'pointer-events:none',
-    'z-index:-1',
+    'z-index:2147483645',
     'overflow:hidden',
   ].join(';');
   document.body.appendChild(host);
@@ -117,24 +143,58 @@ async function renderCertificatePagesToDataUrls({ user, results, copy, lang }) {
   const model = buildCertificateTemplateModel({ results, user, copy, t });
 
   const root = createRoot(host);
-  try {
-    root.render(
-      createElement(CertificateDocumentInner, {
-        model,
-        previewStacked: false,
-      }),
-    );
+  root.render(
+    createElement(CertificateDocumentInner, {
+      model,
+      previewStacked: false,
+    }),
+  );
 
-    await waitFrame();
-    await waitFrame();
-    await waitMs(120);
+  await waitFrame();
+  await waitFrame();
+  await waitMs(200);
+  await document.fonts?.ready;
+
+  const container = host.querySelector('#certificado-container');
+  if (!container) {
+    root.unmount();
+    host.remove();
+    throw new Error('Certificate node not mounted');
+  }
+
+  await waitImages(container);
+  return { host, root, container };
+}
+
+/**
+ * Converte o certificado da prévia (se aberta) ou réplica off-screen em imagens para PDF.
+ */
+async function renderCertificatePagesToDataUrls({ user, results, copy, lang }) {
+  if (typeof window === 'undefined') {
+    throw new Error('Certificate export requires browser environment');
+  }
+
+  const previewMeta = {
+    timestamp: results?.timestamp,
+    userEmail: user?.email,
+  };
+
+  const livePreview = getCertificatePreview(previewMeta);
+  if (livePreview) {
+    await waitImages(livePreview);
     await document.fonts?.ready;
+    await waitMs(80);
+    return capturePagesFromContainer(livePreview);
+  }
 
-    const container = host.querySelector('#certificado-container');
-    if (!container) throw new Error('Certificate node not mounted');
+  const { host, root, container } = await mountOffScreenCertificate({
+    user,
+    results,
+    copy,
+    lang,
+  });
 
-    await waitImages(container);
-
+  try {
     return await capturePagesFromContainer(container);
   } finally {
     root.unmount();
@@ -148,7 +208,7 @@ export async function buildCertificatePdf({ user, results, copy, lang }) {
 
   pageImages.forEach((imageData, index) => {
     if (index > 0) pdf.addPage('a4', 'landscape');
-    pdf.addImage(imageData, 'PNG', 0, 0, PAGE_MM.w, PAGE_MM.h);
+    pdf.addImage(imageData, 'JPEG', 0, 0, PAGE_MM.w, PAGE_MM.h);
   });
 
   return pdf;
@@ -162,47 +222,48 @@ export function getCertificateFileName(user, results) {
 function triggerBlobDownload(blob, filename) {
   const blobUrl = URL.createObjectURL(blob);
 
-  const cleanup = () => {
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
-  };
-
   if (typeof navigator !== 'undefined' && typeof navigator.msSaveOrOpenBlob === 'function') {
     navigator.msSaveOrOpenBlob(blob, filename);
-    cleanup();
-    return { method: 'msSaveOrOpenBlob' };
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
+    return;
   }
 
   const anchor = document.createElement('a');
   anchor.href = blobUrl;
   anchor.download = filename;
   anchor.rel = 'noopener';
-  anchor.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+  anchor.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
   document.body.appendChild(anchor);
   anchor.click();
-  anchor.remove();
-  cleanup();
-  return { method: 'anchor' };
+
+  setTimeout(() => {
+    anchor.remove();
+    URL.revokeObjectURL(blobUrl);
+  }, 60_000);
 }
 
 export async function downloadCertificatePdfFile({ user, results, copy, lang }) {
-  const pdf = await buildCertificatePdf({ user, results, copy, lang });
   const filename = getCertificateFileName(user, results);
+  const pdf = await buildCertificatePdf({ user, results, copy, lang });
   const blob = pdf.output('blob');
 
   if (!blob || blob.size < 100) {
     throw new Error('Generated PDF is empty');
   }
 
-  const ios = isIOSSafari();
-
-  if (ios) {
+  if (isIOSSafari()) {
     const blobUrl = URL.createObjectURL(blob);
     const opened = window.open(blobUrl, '_blank', 'noopener,noreferrer');
     if (!opened) {
       triggerBlobDownload(blob, filename);
     }
     setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
-  } else {
+    return { ok: true };
+  }
+
+  try {
+    pdf.save(filename);
+  } catch {
     triggerBlobDownload(blob, filename);
   }
 
