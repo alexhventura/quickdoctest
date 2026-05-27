@@ -131,7 +131,7 @@ When approved:
    - `https://pagead2.googlesyndication.com`
    - `https://googleads.g.doubleclick.net`
    - `https://tpc.googlesyndication.com`
-   - `https://*.adtrafficquality.google` (SODAR / ad traffic quality)
+   - `https://ep1.adtrafficquality.google` and `https://ep2.adtrafficquality.google` (SODAR / ad traffic quality)
 5. Redeploy and test CLS (layout shift) in Lighthouse.
 
 ---
