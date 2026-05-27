@@ -457,16 +457,20 @@ function PageFooter({ model }) {
           {model.issuedLine}
         </p>
         <p
+          data-qdf-nowrap="true"
           style={{
             margin: 0,
             fontSize: 9,
             fontWeight: 500,
             color: PDF_COLORS.slate400,
             fontFamily: 'monospace',
-            flex: '0 1 auto',
+            flex: '0 0 auto',
+            flexShrink: 0,
             textAlign: 'right',
             lineHeight: 1.3,
             whiteSpace: 'nowrap',
+            wordBreak: 'keep-all',
+            overflowWrap: 'normal',
           }}
         >
           {model.serialLine}

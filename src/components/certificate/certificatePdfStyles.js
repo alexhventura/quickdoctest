@@ -77,4 +77,9 @@ export const PDF_EXPORT_BASE_CSS = `
     hyphens: none !important;
     white-space: normal !important;
   }
+  #qd-pdf-capture-host [data-qdf-nowrap="true"] {
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    overflow-wrap: normal !important;
+  }
 `;

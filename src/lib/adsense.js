@@ -1,44 +1,37 @@
-import { getAdSenseClientId } from '@/lib/env';
+import { getAdSenseClientId, isAdSensePublisherConfigured } from '@/lib/env';
 
 const ADSENSE_ORIGIN = 'https://pagead2.googlesyndication.com';
-const ADSENSE_SCRIPT_ID = 'qd-adsense-script';
 const ADSENSE_SCRIPT_MATCH = `${ADSENSE_ORIGIN}/pagead/js/adsbygoogle.js`;
 
-let adSenseLoadPromise = null;
+let adSenseReadyPromise = null;
 
+/** Produção com publisher configurado (env ou ID padrão do site). */
 export function isAdSenseEnabled() {
-  return Boolean(import.meta.env.PROD && getAdSenseClientId());
+  return Boolean(import.meta.env.PROD && isAdSensePublisherConfigured());
 }
 
+/**
+ * Aguarda o script oficial do <head> (index.html). Não injeta segunda cópia.
+ */
 export function ensureAdSenseScript() {
   if (!isAdSenseEnabled()) return Promise.resolve(false);
 
-  const client = getAdSenseClientId();
-  const src = `${ADSENSE_ORIGIN}/pagead/js/adsbygoogle.js?client=${client}`;
-
-  const existing =
-    document.getElementById(ADSENSE_SCRIPT_ID) ||
-    document.querySelector(`script[src*="${ADSENSE_SCRIPT_MATCH}"]`);
-  if (existing) {
-    if (window.adsbygoogle) return Promise.resolve(true);
-    return new Promise((resolve) => {
-      existing.addEventListener('load', () => resolve(true), { once: true });
-      existing.addEventListener('error', () => resolve(false), { once: true });
-      setTimeout(() => resolve(Boolean(window.adsbygoogle)), 2000);
-    });
+  const existing = document.querySelector(`script[src*="${ADSENSE_SCRIPT_MATCH}"]`);
+  if (!existing) {
+    console.warn('[QuickDoc] AdSense script not found in document head');
+    return Promise.resolve(false);
   }
-  if (adSenseLoadPromise) return adSenseLoadPromise;
 
-  adSenseLoadPromise = new Promise((resolve) => {
-    const script = document.createElement('script');
-    script.id = ADSENSE_SCRIPT_ID;
-    script.async = true;
-    script.crossOrigin = 'anonymous';
-    script.src = src;
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.head.appendChild(script);
+  if (window.adsbygoogle) return Promise.resolve(true);
+  if (adSenseReadyPromise) return adSenseReadyPromise;
+
+  adSenseReadyPromise = new Promise((resolve) => {
+    const finish = () => resolve(Boolean(window.adsbygoogle));
+
+    existing.addEventListener('load', finish, { once: true });
+    existing.addEventListener('error', () => resolve(false), { once: true });
+    setTimeout(finish, 3500);
   });
 
-  return adSenseLoadPromise;
+  return adSenseReadyPromise;
 }

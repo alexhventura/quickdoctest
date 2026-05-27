@@ -11,6 +11,7 @@ import { PAGE_MM } from '@/constants/certificateLayout';
 import { CERTIFICATE_SIZE } from '@/components/certificate/certificateTemplate';
 import { createPdfExportFrame, destroyPdfExportFrame } from '@/lib/pdfExportFrame';
 import { sanitizeCloneForPdfExport } from '@/lib/pdfColorSanitizer';
+import { getCertificateSerial } from '@/utils/certificate/certificateMetrics';
 
 /** A4 paisagem (mm) — alinhado ao layout 841×595 px do certificado. */
 const PDF_A4_LANDSCAPE_MM = { w: PAGE_MM.w, h: PAGE_MM.h };
@@ -213,8 +214,15 @@ async function buildPdfFromPages(pages) {
 
 export const CERTIFICATE_DOWNLOAD_FILENAME = 'quickdoctest-certificado.pdf';
 
-export function getCertificateFileName() {
-  return CERTIFICATE_DOWNLOAD_FILENAME;
+function sanitizeSerialForFilename(serial) {
+  return String(serial || '').replace(/[^a-zA-Z0-9-_]/g, '');
+}
+
+/** Nome do PDF: quickdoctest-certificado-QDT-2026-648552.pdf */
+export function getCertificateFileName(results) {
+  const serial = sanitizeSerialForFilename(getCertificateSerial(results));
+  if (!serial) return CERTIFICATE_DOWNLOAD_FILENAME;
+  return `quickdoctest-certificado-${serial}.pdf`;
 }
 
 function savePdfBlobToDevice(blob, filename) {
@@ -257,7 +265,7 @@ export async function buildCertificatePdf({ user, results, copy, lang }) {
 }
 
 export async function downloadCertificatePdfFile({ user, results, copy, lang }) {
-  const filename = getCertificateFileName();
+  const filename = getCertificateFileName(results);
   const { root, pages } = await mountExportCertificate({ user, results, copy, lang });
 
   try {

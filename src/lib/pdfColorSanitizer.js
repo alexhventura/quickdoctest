@@ -71,6 +71,11 @@ export function applyPdfExportTypography(clonedDoc, rootId = 'qd-pdf-capture-hos
   const nodes = [root, ...root.querySelectorAll('*')];
   nodes.forEach((el) => {
     if (el.tagName === 'IMG') return;
+    if (el.getAttribute('data-qdf-nowrap') === 'true') {
+      el.style.setProperty('white-space', 'nowrap', 'important');
+      el.style.setProperty('word-break', 'keep-all', 'important');
+      el.style.setProperty('overflow-wrap', 'normal', 'important');
+    }
     el.style.setProperty('font-family', PDF_EXPORT_FONT_STACK, 'important');
     el.style.setProperty('letter-spacing', 'normal', 'important');
     el.style.setProperty('word-spacing', 'normal', 'important');

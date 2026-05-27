@@ -1,10 +1,18 @@
-/** Normaliza Publisher ID do AdSense (aceita pub-XXXX ou ca-pub-XXXX) */
+/** Publisher ID oficial (mesmo do script em index.html e ads.txt). */
+export const ADSENSE_PUBLISHER_ID = 'ca-pub-6234467433781084';
+
+/** Normaliza Publisher ID do AdSense (aceita pub-XXXX ou ca-pub-XXXX). */
 export function getAdSenseClientId() {
   const raw = (import.meta.env.VITE_ADSENSE_CLIENT || '').trim();
-  if (!raw) return '';
-  if (raw.startsWith('ca-pub-')) return raw;
-  if (raw.startsWith('pub-')) return `ca-${raw}`;
-  return `ca-pub-${raw}`;
+  const value = raw || (import.meta.env.PROD ? ADSENSE_PUBLISHER_ID : '');
+  if (!value) return '';
+  if (value.startsWith('ca-pub-')) return value;
+  if (value.startsWith('pub-')) return `ca-${value}`;
+  return `ca-pub-${value}`;
+}
+
+export function isAdSensePublisherConfigured() {
+  return Boolean(getAdSenseClientId());
 }
 
 export function getAdSenseSlot() {
