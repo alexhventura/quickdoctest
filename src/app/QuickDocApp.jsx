@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { getThemeStyles } from '@/lib/theme';
 import { useTypingRealtimeEngine } from '@/hooks/useTypingRealtimeEngine';
+import { useDeviceProfile } from '@/hooks/useDeviceProfile';
 import { useSeo } from '@/hooks/useSeo';
 import AdsenseBlock from '@/components/ads/AdsenseBlock';
 import Header from '@/components/layout/Header';
@@ -19,6 +20,7 @@ import CertificateModal from '@/components/certificate/CertificateModal';
 export default function QuickDocApp() {
   const { lang, theme } = useAppStore();
   const { user } = useAuth();
+  const deviceProfile = useDeviceProfile();
   const { isDark } = useTheme();
   const themeStyles = useMemo(() => getThemeStyles(theme), [theme]);
   const [emailStatus, setEmailStatus] = useState(null);
@@ -41,7 +43,12 @@ export default function QuickDocApp() {
 
   const onEmailStatus = useCallback((status) => setEmailStatus(status), []);
 
-  const typing = useTypingRealtimeEngine({ lang, user, onEmailStatus });
+  const typing = useTypingRealtimeEngine({
+    lang,
+    user,
+    onEmailStatus,
+    deviceProfile,
+  });
 
   const handleCloseCertificate = useCallback(() => {
     typing.setShowCertificado(false);
@@ -95,10 +102,12 @@ export default function QuickDocApp() {
                 <TypingScreen
                   themeStyles={themeStyles}
                   isDark={isDark}
+                  deviceProfile={deviceProfile}
                   duration={typing.duration}
                   onDurationChange={typing.setDuration}
                   typingAreaRef={typing.typingAreaRef}
                   onNativeInput={typing.handleNativeInput}
+                  onFocusInputArea={typing.handleTypingAreaFocus}
                   focusMode={typing.focusMode}
                   hudWpmRef={typing.hudWpmRef}
                   hudAccRef={typing.hudAccRef}

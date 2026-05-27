@@ -18,7 +18,7 @@ import { useRealtimeTimer } from './useRealtimeTimer';
 
 const LOADING_MS = 15000;
 
-export function useTypingRealtimeEngine({ lang, user, onEmailStatus }) {
+export function useTypingRealtimeEngine({ lang, user, onEmailStatus, deviceProfile }) {
   const [duration, setDuration] = useState(60);
   const [screen, setScreen] = useState('teste');
   const [targetText, setTargetText] = useState('');
@@ -46,6 +46,12 @@ export function useTypingRealtimeEngine({ lang, user, onEmailStatus }) {
   const inputLengthRef = useRef(0);
   const hasFinishedRef = useRef(false);
   const loadingRafRef = useRef(null);
+  const inputFocusTsRef = useRef(0);
+  const mobileSignalsRef = useRef({
+    reactionMs: 0,
+    autoCorrectCount: 0,
+    swipeLikeCount: 0,
+  });
 
   const metrics = usePerformanceMetrics();
   const onCompleteRef = useRef(() => {});
@@ -135,6 +141,16 @@ export function useTypingRealtimeEngine({ lang, user, onEmailStatus }) {
       elapsedMs,
       lang,
     });
+    if (deviceProfile?.isMobileLike) {
+      finalResults.deviceType = deviceProfile.type;
+      finalResults.mobileMetrics = {
+        speed: finalResults.netWpm,
+        touchAccuracy: finalResults.accuracy,
+        reactionMs: mobileSignalsRef.current.reactionMs,
+        autoCorrectCount: mobileSignalsRef.current.autoCorrectCount,
+        swipeLikeCount: mobileSignalsRef.current.swipeLikeCount,
+      };
+    }
     pendingResultsRef.current = finalResults;
     setChartData([...chartDataRef.current]);
 
@@ -206,6 +222,12 @@ export function useTypingRealtimeEngine({ lang, user, onEmailStatus }) {
     metrics.resetMetrics();
     timelineRef.current.reset();
     timelineRef.current.start({ lang, duration });
+    mobileSignalsRef.current = {
+      reactionMs: 0,
+      autoCorrectCount: 0,
+      swipeLikeCount: 0,
+    };
+    inputFocusTsRef.current = 0;
 
     chartDataRef.current = [];
     inputLengthRef.current = 0;
@@ -255,6 +277,7 @@ export function useTypingRealtimeEngine({ lang, user, onEmailStatus }) {
     (event) => {
       const value = event.target.value;
       const target = targetTextRef.current;
+      const nativeType = event?.nativeEvent?.inputType || '';
 
       if (screenRef.current !== 'teste' || value.length > target.length) {
         event.target.value = timer.currentInputRef.current;
@@ -266,7 +289,23 @@ export function useTypingRealtimeEngine({ lang, user, onEmailStatus }) {
 
       if (!timer.isActiveRef.current && value.length === 1) {
         setFocusMode(true);
+        if (deviceProfile?.isMobileLike && inputFocusTsRef.current && !mobileSignalsRef.current.reactionMs) {
+          mobileSignalsRef.current.reactionMs = Math.max(
+            0,
+            Math.round(performance.now() - inputFocusTsRef.current),
+          );
+        }
         timer.start();
+      }
+
+      if (deviceProfile?.isMobileLike) {
+        const delta = value.length - prev.length;
+        if (delta > 1 && nativeType !== 'insertFromPaste') {
+          mobileSignalsRef.current.autoCorrectCount += 1;
+          mobileSignalsRef.current.swipeLikeCount += 1;
+        } else if (nativeType === 'insertReplacementText') {
+          mobileSignalsRef.current.autoCorrectCount += 1;
+        }
       }
 
       metrics.recordKeystrokeLatency(now);
@@ -294,8 +333,15 @@ export function useTypingRealtimeEngine({ lang, user, onEmailStatus }) {
         finishTest();
       }
     },
-    [timer, metrics, updateHud, finishTest],
+    [timer, metrics, updateHud, finishTest, deviceProfile],
   );
+
+  const handleTypingAreaFocus = useCallback(() => {
+    if (!deviceProfile?.isMobileLike) return;
+    if (!timer.isActiveRef.current && !inputFocusTsRef.current) {
+      inputFocusTsRef.current = performance.now();
+    }
+  }, [deviceProfile, timer]);
 
   const dismissAdPopup = useCallback(() => {
     setShowAdPopup(false);
@@ -324,6 +370,7 @@ export function useTypingRealtimeEngine({ lang, user, onEmailStatus }) {
     hudTimerRef,
     resetTest,
     handleNativeInput,
+    handleTypingAreaFocus,
     getTimelineSnapshot: () => timelineRef.current.exportSnapshot(),
   };
 }

@@ -9,10 +9,12 @@ import TypingHUD from './TypingHUD';
 
 function TypingScreen({
   themeStyles,
+  deviceProfile,
   duration,
   onDurationChange,
   typingAreaRef,
   onNativeInput,
+  onFocusInputArea,
   focusMode,
   hudWpmRef,
   hudAccRef,
@@ -31,7 +33,7 @@ function TypingScreen({
     <div
       className={`qd-test-shell ${
         focusMode ? 'qd-test-shell--active' : ''
-      }`}
+      } ${deviceProfile?.isMobileLike ? 'qd-test-shell--mobile' : ''}`}
     >
       {/* TIMER */}
       <div className="flex flex-col items-center gap-1 mb-3">
@@ -49,6 +51,7 @@ function TypingScreen({
         accRef={hudAccRef}
         timerRef={hudTimerRef}
         labels={labels}
+        compact={deviceProfile?.isMobileLike}
       />
 
       {/* INPUT AREA (CORE) */}
@@ -56,10 +59,12 @@ function TypingScreen({
         <TypingArea
           ref={typingAreaRef}
           isDark={isDark}
+          isMobile={deviceProfile?.isMobileLike}
           onNativeInput={onNativeInput}
-          onFocusArea={() =>
-            typingAreaRef.current?.focus?.()
-          }
+          onFocusArea={() => {
+            onFocusInputArea?.();
+            typingAreaRef.current?.focus?.();
+          }}
         />
 
         {/* CURSOR FIX LAYER (IMPORTANTE PARA BUG VISUAL) */}

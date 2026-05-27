@@ -27,6 +27,12 @@ body {
     background 0.45s ease;
 }
 
+.qd-test-shell--mobile {
+  max-width: 100%;
+  padding: 1rem 0.9rem 1.25rem;
+  border-radius: 1rem;
+}
+
 :root:not(.dark) .qd-test-shell,
 html:not(.dark) .qd-test-shell {
   border-color: rgb(15 23 42 / 0.08);
@@ -164,6 +170,23 @@ html:not(.dark) .qd-test-shell {
   margin-bottom: 0.25rem;
 }
 
+.qd-hud--mobile {
+  gap: 1.1rem;
+  padding: 0.5rem 0 1rem;
+}
+
+.qd-hud--mobile .qd-hud-item {
+  min-width: 4rem;
+}
+
+.qd-hud--mobile .qd-hud-label {
+  font-size: 0.58rem;
+}
+
+.qd-hud--mobile .qd-hud-value {
+  font-size: 1.45rem;
+}
+
 .qd-hud-item {
   display: flex;
   flex-direction: column;
@@ -226,6 +249,19 @@ html:not(.dark) .qd-duration-btn:hover {
   color: rgb(148 163 184);
 }
 
+.qd-test-shell--mobile .qd-duration-group {
+  width: 100%;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.qd-test-shell--mobile .qd-duration-btn {
+  flex: 1;
+  min-height: 42px;
+  font-size: 0.9rem;
+  border-radius: 0.65rem;
+}
+
 .qd-duration-btn:hover {
   color: rgb(226 232 240);
 }
@@ -242,6 +278,23 @@ html:not(.dark) .qd-duration-btn:hover {
   font-size: 0.7rem;
   letter-spacing: 0.04em;
   color: rgb(100 116 139);
+}
+
+.qd-test-shell--mobile .qd-test-hint {
+  margin-top: 0.85rem;
+  text-align: center;
+  font-size: 0.72rem;
+}
+
+@media (max-width: 768px) {
+  .qd-typing-area {
+    padding: 1.25rem 0.5rem;
+  }
+
+  .qd-typing-area .qd-text-layer {
+    font-size: 26px;
+    line-height: 1.75;
+  }
 }
 
 /* ─── Language menu ─── */

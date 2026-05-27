@@ -10,7 +10,7 @@ import {
 import { getCharClasses, resolveCharClass } from '@/utils/typing/charClasses';
 
 const TypingArea = memo(
-  forwardRef(function TypingArea({ onNativeInput, onFocusArea, isDark = false }, ref) {
+  forwardRef(function TypingArea({ onNativeInput, onFocusArea, isDark = false, isMobile = false }, ref) {
     const containerRef = useRef(null);
     const textLayerRef = useRef(null);
     const inputRef = useRef(null);
@@ -227,11 +227,11 @@ const TypingArea = memo(
             display: block !important;
             width: 100% !important;
             max-width: 1000px !important;
-            height: 340px !important; 
+            height: ${isMobile ? '390px' : '340px'} !important;
             overflow-y: hidden !important; 
             overflow-x: hidden !important;
             margin: 0 auto !important;
-            padding: 24px !important;
+            padding: ${isMobile ? '28px' : '24px'} !important;
             box-sizing: border-box !important;
             text-align: left !important;
             
@@ -249,11 +249,12 @@ const TypingArea = memo(
 
           .qd-input {
             position: absolute !important;
-            opacity: 0 !important;
+            opacity: 0.01 !important;
             pointer-events: none !important;
-            width: 0 !important;
-            height: 0 !important;
+            width: 1px !important;
+            height: 1px !important;
             z-index: -1 !important;
+            font-size: 16px !important;
           }
 
           .qd-text-layer {
@@ -262,7 +263,7 @@ const TypingArea = memo(
             width: 100% !important;
             white-space: normal !important; 
             font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
-            font-size: 1.45rem !important;
+            font-size: ${isMobile ? '1.35rem' : '1.45rem'} !important;
             line-height: 1.6 !important;
             letter-spacing: -0.01em !important;
             color: ${isDark ? '#000000' : '#94a3b8'} !important;
@@ -311,6 +312,9 @@ const TypingArea = memo(
           onInput={onNativeInput}
           className="qd-input"
           autoComplete="off"
+          autoCapitalize="off"
+          autoCorrect="off"
+          inputMode="text"
           spellCheck={false}
         />
         <div ref={textLayerRef} className="qd-text-layer">

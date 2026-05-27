@@ -1,8 +1,8 @@
 import { memo } from 'react';
 
-function TypingHUD({ wpmRef, accRef, timerRef, labels }) {
+function TypingHUD({ wpmRef, accRef, timerRef, labels, compact = false }) {
   return (
-    <div className="qd-hud" role="status" aria-live="polite">
+    <div className={`qd-hud ${compact ? 'qd-hud--mobile' : ''}`} role="status" aria-live="polite">
       <div className="qd-hud-item">
         <span className="qd-hud-label">{labels.hudWpm}</span>
         <span ref={wpmRef} className="qd-hud-value qd-hud-value--accent">

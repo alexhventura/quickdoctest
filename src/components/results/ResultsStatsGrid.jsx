@@ -13,6 +13,7 @@ function StatItem({ label, value, labelClass, valueClass }) {
 
 function ResultsStatsGrid({ results, themeStyles }) {
   const { t } = useI18n();
+  const mobile = results?.mobileMetrics;
 
   return (
     <div
@@ -54,6 +55,38 @@ function ResultsStatsGrid({ results, themeStyles }) {
         labelClass="text-amber-400"
         valueClass="text-amber-500"
       />
+      {mobile && (
+        <StatItem
+          label={`${t('mobileSpeed')}:`}
+          value={`${mobile.speed} WPM`}
+          labelClass="text-violet-400"
+          valueClass="text-violet-500"
+        />
+      )}
+      {mobile && (
+        <StatItem
+          label={`${t('touchAccuracy')}:`}
+          value={`${mobile.touchAccuracy}%`}
+          labelClass="text-cyan-400"
+          valueClass="text-cyan-500"
+        />
+      )}
+      {mobile && (
+        <StatItem
+          label={`${t('reactionTime')}:`}
+          value={`${mobile.reactionMs || 0} ms`}
+          labelClass="text-fuchsia-400"
+          valueClass="text-fuchsia-500"
+        />
+      )}
+      {mobile && (
+        <StatItem
+          label={`${t('autocorrectErrors')}:`}
+          value={mobile.autoCorrectCount || 0}
+          labelClass="text-rose-400"
+          valueClass="text-rose-500"
+        />
+      )}
     </div>
   );
 }
