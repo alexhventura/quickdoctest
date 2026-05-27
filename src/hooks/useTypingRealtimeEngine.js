@@ -49,7 +49,7 @@ export function useTypingRealtimeEngine({ lang, user, onEmailStatus, deviceProfi
   const loadingRafRef = useRef(null);
   const inputFocusTsRef = useRef(0);
   const testDeviceTypeRef = useRef('desktop');
-  const testDeviceDetailRef = useRef('');
+  const testDeviceInfoPartsRef = useRef(null);
   const mobileSignalsRef = useRef({
     reactionMs: 0,
     autoCorrectCount: 0,
@@ -145,7 +145,7 @@ export function useTypingRealtimeEngine({ lang, user, onEmailStatus, deviceProfi
       lang,
     });
     finalResults.deviceType = testDeviceTypeRef.current;
-    finalResults.deviceDetail = testDeviceDetailRef.current;
+    finalResults.deviceInfoParts = testDeviceInfoPartsRef.current;
     if (deviceProfile?.isMobileLike) {
       finalResults.mobileMetrics = {
         speed: finalResults.netWpm,
@@ -234,7 +234,7 @@ export function useTypingRealtimeEngine({ lang, user, onEmailStatus, deviceProfi
     inputFocusTsRef.current = 0;
     const device = resolveTestDeviceFromProfile(deviceProfile);
     testDeviceTypeRef.current = device.type;
-    testDeviceDetailRef.current = device.detail;
+    testDeviceInfoPartsRef.current = device.parts;
 
     chartDataRef.current = [];
     inputLengthRef.current = 0;

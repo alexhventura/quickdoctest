@@ -1,86 +1,82 @@
-/** Tipo de dispositivo no momento do teste (UA + touch + largura). */
-export function getTestDeviceType(width = typeof window !== 'undefined' ? window.innerWidth : 1024) {
-  if (typeof navigator === 'undefined') {
-    return width >= 1024 ? 'desktop' : width >= 768 ? 'tablet' : 'mobile';
-  }
-
-  const ua = navigator.userAgent || '';
-  const coarse = window.matchMedia?.('(pointer: coarse)').matches ?? false;
-  const maxTouch = navigator.maxTouchPoints || 0;
-  const touch = coarse || maxTouch > 0;
-
-  const uaMobile = /Mobi|Android|iPhone|iPod|Windows Phone|BlackBerry/i.test(ua);
-  const uaTablet = /iPad|Tablet|Nexus 7|Nexus 10|KFAPWI/i.test(ua);
-  const isIpadOs =
-    navigator.platform === 'MacIntel' && maxTouch > 1 && !/iPhone|iPod/.test(ua);
-
-  if (uaTablet || isIpadOs || (touch && width >= 768 && width < 1024)) {
-    return 'tablet';
-  }
-  if (uaMobile || (touch && width < 768)) {
-    return 'mobile';
-  }
-  if (width >= 1024) return 'desktop';
-  if (width >= 768) return 'tablet';
-  return 'mobile';
+/** Chave interna: mobile | tablet | desktop */
+export function getTestDeviceType() {
+  return getDeviceTypeKey();
 }
 
-/** Detalhe legível do aparelho (modelo / SO) para o certificado. */
-export function getTestDeviceDetail() {
+function getDeviceTypeKey() {
+  if (typeof navigator === 'undefined') return 'desktop';
+
+  const ua = navigator.userAgent.toLowerCase();
+  const isIpadOs =
+    navigator.platform === 'MacIntel' && (navigator.maxTouchPoints || 0) > 1;
+
+  const isTablet = /ipad|tablet|playbook|silk/.test(ua) || isIpadOs;
+  const isMobile = /android|iphone|ipod/.test(ua) && !isTablet;
+
+  if (isTablet) return 'tablet';
+  if (isMobile) return 'mobile';
+  return 'desktop';
+}
+
+/** Sistema operacional (UA — confiável para certificado). */
+export function getOS() {
   if (typeof navigator === 'undefined') return '';
 
-  const ua = navigator.userAgent || '';
+  const ua = navigator.userAgent;
 
-  const iosVersion = () => {
-    const m = ua.match(/OS (\d+[_\d]*)/);
-    return m ? m[1].replace(/_/g, '.') : '';
-  };
-
-  if (/iPhone|iPod/.test(ua)) {
-    const ver = iosVersion();
-    return ver ? `iPhone · iOS ${ver}` : 'iPhone · iOS';
-  }
-
-  if (/iPad/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
-    const ver = iosVersion();
-    return ver ? `iPad · iOS ${ver}` : 'iPad · iOS';
-  }
-
-  if (/Android/i.test(ua)) {
-    const ver = ua.match(/Android\s([\d.]+)/i)?.[1];
-    const model = ua.match(/Android\s[\d.]+;\s*([^)]+)\)/i)?.[1]?.trim();
-    const parts = ['Android'];
-    if (ver) parts.push(ver);
-    if (model && model !== 'Mobile' && !/^sdk_/i.test(model)) {
-      parts.push(model);
-    }
-    return parts.join(' · ');
-  }
-
-  if (/Windows Phone/i.test(ua)) return 'Windows Phone';
+  if (ua.includes('Windows')) return 'Windows';
+  if (ua.includes('iPhone') || ua.includes('iPad') || isIpadOsUa(ua)) return 'iOS';
+  if (ua.includes('Android')) return 'Android';
+  if (ua.includes('Mac OS') || ua.includes('Macintosh')) return 'macOS';
+  if (ua.includes('Linux')) return 'Linux';
 
   return '';
 }
 
-export function resolveTestDeviceFromProfile(deviceProfile) {
-  if (!deviceProfile) {
-    return {
-      type: getTestDeviceType(),
-      detail: getTestDeviceDetail(),
-    };
-  }
+function isIpadOsUa(ua) {
+  return (
+    typeof navigator !== 'undefined' &&
+    navigator.platform === 'MacIntel' &&
+    (navigator.maxTouchPoints || 0) > 1 &&
+    !/iPhone|iPod/.test(ua)
+  );
+}
 
-  const type = deviceProfile.isMobile
-    ? 'mobile'
-    : deviceProfile.isTablet
-      ? 'tablet'
-      : deviceProfile.isDesktop
-        ? 'desktop'
-        : getTestDeviceType();
+/** Navegador (ordem: Edge → Firefox → Chrome → Safari). */
+export function getBrowser() {
+  if (typeof navigator === 'undefined') return '';
 
-  const detail = type === 'desktop' ? '' : getTestDeviceDetail();
+  const ua = navigator.userAgent;
 
-  return { type, detail };
+  if (ua.includes('Edg/') || ua.includes('EdgA') || ua.includes('EdgiOS')) return 'Edge';
+  if (ua.includes('Firefox') || ua.includes('FxiOS')) return 'Firefox';
+  if (ua.includes('CriOS')) return 'Google Chrome';
+  if (ua.includes('Chrome') && !ua.includes('Edg')) return 'Google Chrome';
+  if (ua.includes('Safari') && !ua.includes('Chrome')) return 'Safari';
+  if (ua.includes('OPR') || ua.includes('Opera')) return 'Opera';
+
+  return '';
+}
+
+/** Resolução física da tela (ex.: 1080x2400). */
+export function getScreenResolution() {
+  if (typeof window === 'undefined' || !window.screen) return '';
+
+  const w = window.screen.width;
+  const h = window.screen.height;
+  if (!w || !h) return '';
+
+  return `${w}x${h}`;
+}
+
+/** Partes detectadas no momento do teste (para gravar nos resultados). */
+export function buildDeviceInfoParts() {
+  return {
+    type: getDeviceTypeKey(),
+    os: getOS(),
+    browser: getBrowser(),
+    screen: getScreenResolution(),
+  };
 }
 
 export function getTestDeviceTypeLabel(type, t) {
@@ -89,13 +85,46 @@ export function getTestDeviceTypeLabel(type, t) {
   return label === key ? t('deviceType_unknown') : label;
 }
 
-export function buildCertificateDeviceLine(results, t) {
-  const deviceLabel = getTestDeviceTypeLabel(results?.deviceType, t);
-  const detail = String(results?.deviceDetail || '').trim();
+/**
+ * Tipo — SO — Navegador [(largura)x(altura)]
+ * Ex.: Celular — Android — Google Chrome (1080x2400)
+ */
+export function formatDeviceInfo(parts, t, { includeScreen = true } = {}) {
+  const typeLabel = getTestDeviceTypeLabel(parts?.type, t);
+  const os = parts?.os || t('deviceOs_unknown');
+  const browser = parts?.browser || t('deviceBrowser_unknown');
+  const core = `${typeLabel} — ${os} — ${browser}`;
 
-  if (detail) {
-    return t('certDeviceUsedWithDetail', { device: deviceLabel, detail });
+  if (includeScreen && parts?.screen) {
+    return `${core} (${parts.screen})`;
   }
 
-  return t('certDeviceUsed', { device: deviceLabel });
+  return core;
+}
+
+/** Função única: informação completa do dispositivo para o certificado. */
+export function getDeviceInfo(t, options) {
+  return formatDeviceInfo(buildDeviceInfoParts(), t, options);
+}
+
+/** Snapshot no início do teste (tipo + partes para reformatar no idioma do certificado). */
+export function captureTestDeviceSnapshot() {
+  const parts = buildDeviceInfoParts();
+  return {
+    type: parts.type,
+    parts,
+  };
+}
+
+export function resolveTestDeviceFromProfile() {
+  return captureTestDeviceSnapshot();
+}
+
+export function buildCertificateDeviceLine(results, t) {
+  const parts = results?.deviceInfoParts;
+  const info = parts
+    ? formatDeviceInfo(parts, t, { includeScreen: true })
+    : String(results?.deviceInfo || '').trim() || getDeviceInfo(t);
+
+  return t('certDeviceUsed', { device: info });
 }

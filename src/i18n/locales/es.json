@@ -166,9 +166,10 @@
   "faqMobileCertQ": "¿Puedo obtener un certificado tras el test en el móvil?",
   "faqMobileCertA": "Sí. Tras finalizar, inicia sesión con Google para descargar o enviar por correo tu certificado PDF A4 con tus métricas.",
   "certDeviceUsed": "Dispositivo utilizado en el test: {{device}}",
-  "certDeviceUsedWithDetail": "Dispositivo utilizado en el test: {{device}} ({{detail}})",
   "deviceType_desktop": "Desktop",
   "deviceType_tablet": "Tablet",
   "deviceType_mobile": "Móvil",
-  "deviceType_unknown": "No informado"
+  "deviceType_unknown": "No informado",
+  "deviceOs_unknown": "Desconocido",
+  "deviceBrowser_unknown": "Navegador desconocido"
 }
