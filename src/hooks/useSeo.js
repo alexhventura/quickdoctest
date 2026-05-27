@@ -147,8 +147,15 @@ export function useSeo({ title, description, lang = 'en', faqItems = [] } = {}) 
       name: SITE_NAME,
       url: canonicalUrl,
       description: pageDescription,
+      applicationCategory: SITE_CATEGORY,
+      operatingSystem: 'Web, Android, iOS',
       browserRequirements: 'Requires JavaScript and modern browser',
       inLanguage: HREFLANG_MAP[lang] || 'en',
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
     });
 
     if (Array.isArray(faqItems) && faqItems.length > 0) {

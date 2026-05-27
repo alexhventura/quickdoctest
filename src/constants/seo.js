@@ -3,17 +3,21 @@ export const SITE_NAME = 'QuickDocTest';
 export const SITE_CATEGORY = 'EducationalApplication';
 export const SITE_LOGO = `${SITE_URL}/favicon.svg`;
 
-export const DEFAULT_TITLE = 'QuickDocTest | Professional Typing Speed Test';
+export const DEFAULT_TITLE = 'Mobile Typing Speed Test | QuickDocTest - WPM & Accuracy';
 export const DEFAULT_DESCRIPTION =
-  'Measure typing speed, accuracy and performance with internationally recognized metrics and digital certification.';
+  'Free mobile typing speed test. Measure WPM, accuracy and performance on your smartphone with an optimized virtual keyboard layout. Works on mobile and desktop.';
 export const DEFAULT_KEYWORDS = [
   'typing speed test',
+  'mobile typing speed test',
+  'typing test mobile',
   'wpm test',
   'typing accuracy',
   'typing certification',
   'QuickDocTest',
-  'teste de digitacao',
-  'prueba de mecanografia',
+  'teste de digitação no celular',
+  'teste de velocidade no celular',
+  'teste de digitacao mobile',
+  'prueba de mecanografia movil',
 ].join(', ');
 export const SITE_AUTHOR = 'QuickDocTest Team';
 
@@ -30,18 +34,18 @@ export const HREFLANG_MAP = {
 
 export const SEO_BY_LANG = {
   pt: {
-    title: 'QuickDocTest | Teste Profissional de Velocidade de Digitação',
+    title: 'Teste de Digitação no Celular | QuickDocTest - Velocidade e Precisão Mobile',
     description:
-      'Meça velocidade, precisão e desempenho na digitação com métricas reconhecidas internacionalmente e certificação digital.',
+      'Teste de digitação no celular grátis. Meça sua velocidade (WPM), precisão e desempenho diretamente no smartphone. Compatível com mobile e desktop.',
   },
   en: {
     title: DEFAULT_TITLE,
     description: DEFAULT_DESCRIPTION,
   },
   es: {
-    title: 'QuickDocTest | Test Profesional de Velocidad de Mecanografía',
+    title: 'Test de Mecanografía en el Móvil | QuickDocTest - Velocidad y Precisión',
     description:
-      'Mide velocidad, precisión y rendimiento de mecanografía con métricas reconocidas internacionalmente y certificación digital.',
+      'Test de mecanografía en el móvil gratis. Mide WPM, precisión y rendimiento en tu smartphone con teclado virtual optimizado. Compatible con móvil y escritorio.',
   },
 };
 

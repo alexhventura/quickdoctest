@@ -10,7 +10,7 @@ import {
 import { getCharClasses, resolveCharClass } from '@/utils/typing/charClasses';
 
 const TypingArea = memo(
-  forwardRef(function TypingArea({ onNativeInput, onFocusArea, isDark = false, isMobile = false }, ref) {
+  forwardRef(function TypingArea({ onNativeInput, onFocusArea, isDark = false, isMobile = false, keyboardOpen = false }, ref) {
     const containerRef = useRef(null);
     const textLayerRef = useRef(null);
     const inputRef = useRef(null);
@@ -198,6 +198,11 @@ const TypingArea = memo(
         if (containerRef.current) containerRef.current.scrollTop = 0;
         scheduleCaretUpdate(0);
       },
+      syncLayout() {
+        const index = inputRefValue.current.length;
+        scheduleCaretUpdate(index);
+        ensureCaretVisibility(index);
+      },
     }));
 
     useEffect(() => {
@@ -214,10 +219,21 @@ const TypingArea = memo(
       };
     }, []);
 
+    useEffect(() => {
+      if (!keyboardOpen) return;
+      const index = inputRefValue.current.length;
+      scheduleCaretUpdate(index);
+      ensureCaretVisibility(index);
+    }, [keyboardOpen, scheduleCaretUpdate, ensureCaretVisibility]);
+
+    const mobileHeight = keyboardOpen
+      ? 'calc(var(--visual-viewport-height, 100vh) - 12.5rem)'
+      : 'min(390px, calc(var(--visual-viewport-height, 100vh) - 16rem))';
+
     return (
       <div
         ref={containerRef}
-        className="qd-typing-area"
+        className={`qd-typing-area${isMobile ? ' qd-typing-area--mobile' : ''}${keyboardOpen ? ' qd-typing-area--keyboard-open' : ''}`}
         onClick={onFocusArea}
       >
         <style>{`
@@ -227,9 +243,11 @@ const TypingArea = memo(
             display: block !important;
             width: 100% !important;
             max-width: 1000px !important;
-            height: ${isMobile ? '390px' : '340px'} !important;
-            overflow-y: hidden !important; 
+            height: ${isMobile ? mobileHeight : '340px'} !important;
+            min-height: ${isMobile ? '160px' : '340px'} !important;
+            overflow-y: ${isMobile ? 'auto' : 'hidden'} !important; 
             overflow-x: hidden !important;
+            -webkit-overflow-scrolling: touch !important;
             margin: 0 auto !important;
             padding: ${isMobile ? '28px' : '24px'} !important;
             box-sizing: border-box !important;
@@ -265,7 +283,8 @@ const TypingArea = memo(
             font-family: 'JetBrains Mono', 'Fira Code', monospace !important;
             font-size: ${isMobile ? '1.35rem' : '1.45rem'} !important;
             line-height: 1.6 !important;
-            letter-spacing: -0.01em !important;
+            letter-spacing: ${isMobile ? 'normal' : '-0.01em'} !important;
+            word-spacing: ${isMobile ? 'normal' : '0'} !important;
             color: ${isDark ? '#000000' : '#94a3b8'} !important;
             user-select: none !important;
           }

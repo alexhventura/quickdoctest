@@ -3,6 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useAppStore } from '@/store/appStore';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useI18n } from '@/contexts/I18nContext';
 import { getThemeStyles } from '@/lib/theme';
 import { useTypingRealtimeEngine } from '@/hooks/useTypingRealtimeEngine';
 import { useDeviceProfile } from '@/hooks/useDeviceProfile';
@@ -16,29 +17,38 @@ import LoadingScreen from '@/components/results/LoadingScreen';
 import ResultsScreen from '@/components/results/ResultsScreen';
 import AdSensePopup from '@/components/ads/AdSensePopup';
 import CertificateModal from '@/components/certificate/CertificateModal';
+import MobileTypingSeoSection from '@/components/seo/MobileTypingSeoSection';
 
 export default function QuickDocApp() {
   const { lang, theme } = useAppStore();
+  const { t } = useI18n();
   const { user } = useAuth();
   const deviceProfile = useDeviceProfile();
   const { isDark } = useTheme();
   const themeStyles = useMemo(() => getThemeStyles(theme), [theme]);
   const [emailStatus, setEmailStatus] = useState(null);
 
-  useSeo({
-    lang,
-    faqItems: [
+  const faqItems = useMemo(
+    () => [
       {
-        question: 'What is QuickDocTest used for?',
-        answer:
-          'QuickDocTest helps users measure typing speed, accuracy, and overall performance with standardized metrics.',
+        question: t('faqMobileTypingQ'),
+        answer: t('faqMobileTypingA'),
       },
       {
-        question: 'Does QuickDocTest support PDF-related workflows?',
-        answer:
-          'QuickDocTest is expanding SEO-ready pages for PDF tools including compression, merge, and text extraction.',
+        question: t('faqMobileWpmQ'),
+        answer: t('faqMobileWpmA'),
+      },
+      {
+        question: t('faqMobileCertQ'),
+        answer: t('faqMobileCertA'),
       },
     ],
+    [t],
+  );
+
+  useSeo({
+    lang,
+    faqItems,
   });
 
   const onEmailStatus = useCallback((status) => setEmailStatus(status), []);
@@ -81,7 +91,7 @@ export default function QuickDocApp() {
       </div>
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-8 lg:px-6 grid grid-cols-1 lg:grid-cols-5 gap-6">
-        <h1 className="sr-only">QuickDocTest Professional Typing and PDF Tools Platform</h1>
+        <h1 className="sr-only">{t('seoMobileH1')}</h1>
         <div className="qd-dim-when-focus qd-side-blur hidden lg:block">
           <AdSidebar />
         </div>
@@ -114,6 +124,7 @@ export default function QuickDocApp() {
                   hudTimerRef={typing.hudTimerRef}
                   targetText={typing.targetText}
                 />
+                {!typing.focusMode && <MobileTypingSeoSection />}
               </motion.div>
             )}
 

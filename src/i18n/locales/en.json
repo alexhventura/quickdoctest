@@ -150,5 +150,19 @@
   "rankPercentile_beginner": "Top 70% worldwide. Practice daily to build muscle memory.",
   "rankPercentile_intermediate": "You balance global average speed with strong text focus.",
   "rankPercentile_professional": "You outperform 70% of the global population. Solid corporate pace and low latency.",
-  "rankPercentile_elite": "You are among the fastest 10% worldwide. Impeccable rhythm and excellent speed."
+  "rankPercentile_elite": "You are among the fastest 10% worldwide. Impeccable rhythm and excellent speed.",
+  "seoMobileH1": "Mobile Typing Test — QuickDocTest",
+  "seoMobileTitle": "Mobile Typing Speed Test",
+  "seoMobileLead": "Speed, accuracy and digital certificate — optimized for smartphones.",
+  "seoMobileBody": "QuickDocTest works on phones and tablets with an optimized virtual keyboard layout. While you type, the test text stays visible above the keyboard instead of being covered. Measure WPM, accuracy and performance on mobile or desktop.",
+  "seoMobileBullet1": "Free mobile typing speed test",
+  "seoMobileBullet2": "Typing test mobile with WPM and accuracy",
+  "seoMobileBullet3": "Virtual keyboard-friendly layout (Android & iOS)",
+  "seoMobileBullet4": "Digital certificate after the test",
+  "faqMobileTypingQ": "Does QuickDocTest work as a mobile typing test?",
+  "faqMobileTypingA": "Yes. The test is optimized for smartphones: text stays visible when the virtual keyboard opens on Android and iOS.",
+  "faqMobileWpmQ": "How do I measure typing speed on my phone?",
+  "faqMobileWpmA": "Pick a duration, tap the text area and type normally. The app calculates net WPM, accuracy, CPM and more in real time.",
+  "faqMobileCertQ": "Can I get a certificate after a mobile typing test?",
+  "faqMobileCertA": "Yes. After finishing, sign in with Google to download or email your A4 PDF certificate with your metrics."
 }

@@ -1,8 +1,9 @@
-import { memo, useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 import { useAppStore } from '@/store/appStore';
 import { useI18n } from '@/contexts/I18nContext';
 import { getTextMeta } from '@/constants/texts';
 import { DURATION_SPECS } from '@/constants/typingSpecs';
+import { useMobileKeyboardOffset } from '@/hooks/useMobileKeyboardOffset';
 import DurationSelector from './DurationSelector';
 import TypingArea from './TypingArea';
 import TypingHUD from './TypingHUD';
@@ -29,11 +30,21 @@ function TypingScreen({
     [targetText],
   );
 
+  const isMobileLike = Boolean(deviceProfile?.isMobileLike);
+  const { keyboardOpen } = useMobileKeyboardOffset(isMobileLike);
+
+  useEffect(() => {
+    if (!keyboardOpen) return;
+    typingAreaRef?.current?.syncLayout?.();
+  }, [keyboardOpen, typingAreaRef]);
+
   return (
     <div
       className={`qd-test-shell ${
         focusMode ? 'qd-test-shell--active' : ''
-      } ${deviceProfile?.isMobileLike ? 'qd-test-shell--mobile' : ''}`}
+      } ${isMobileLike ? 'qd-test-shell--mobile' : ''}${
+        isMobileLike && keyboardOpen ? ' qd-test-shell--keyboard-open' : ''
+      }`}
     >
       {/* TIMER */}
       <div className="flex flex-col items-center gap-1 mb-3">
@@ -51,7 +62,7 @@ function TypingScreen({
         accRef={hudAccRef}
         timerRef={hudTimerRef}
         labels={labels}
-        compact={deviceProfile?.isMobileLike}
+        compact={isMobileLike}
       />
 
       {/* INPUT AREA (CORE) */}
@@ -59,7 +70,8 @@ function TypingScreen({
         <TypingArea
           ref={typingAreaRef}
           isDark={isDark}
-          isMobile={deviceProfile?.isMobileLike}
+          isMobile={isMobileLike}
+          keyboardOpen={keyboardOpen}
           onNativeInput={onNativeInput}
           onFocusArea={() => {
             onFocusInputArea?.();

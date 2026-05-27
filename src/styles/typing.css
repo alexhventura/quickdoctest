@@ -286,14 +286,32 @@ html:not(.dark) .qd-duration-btn:hover {
   font-size: 0.72rem;
 }
 
+/* Mobile: reposiciona o teste acima do teclado virtual */
 @media (max-width: 768px) {
+  .qd-test-shell--mobile {
+    transform: translateY(calc(var(--keyboard-offset, 0px) * -1));
+    transition: transform 0.2s ease;
+    will-change: transform;
+  }
+
+  .qd-test-shell--mobile.qd-test-shell--keyboard-open {
+    position: relative;
+    z-index: 40;
+  }
+
+  .qd-test-shell--mobile .qd-typing-area--mobile {
+    scroll-margin-top: 0.5rem;
+  }
+
   .qd-typing-area {
-    padding: 1.25rem 0.5rem;
+    padding: 1.25rem 0.75rem;
   }
 
   .qd-typing-area .qd-text-layer {
     font-size: 26px;
     line-height: 1.75;
+    letter-spacing: normal;
+    word-spacing: normal;
   }
 }
 

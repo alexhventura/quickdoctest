@@ -150,5 +150,19 @@
   "rankPercentile_beginner": "Franja del 70% mundial. Practica a diario para desarrollar memoria muscular.",
   "rankPercentile_intermediate": "Equilibras la velocidad media global con enfoque en el texto.",
   "rankPercentile_professional": "Superas al 70% de la población mundial. Ritmo corporativo sólido y baja latencia.",
-  "rankPercentile_elite": "Formas parte del 10% más rápido del mundo. Ritmo impecable y excelente velocidad."
+  "rankPercentile_elite": "Formas parte del 10% más rápido del mundo. Ritmo impecable y excelente velocidad.",
+  "seoMobileH1": "Test de Mecanografía en el Móvil — QuickDocTest",
+  "seoMobileTitle": "Test de Mecanografía en el Móvil",
+  "seoMobileLead": "Velocidad, precisión y certificado digital — optimizado para smartphones.",
+  "seoMobileBody": "QuickDocTest funciona en móviles y tablets con teclado virtual optimizado. Al escribir, el texto del test permanece visible sobre el teclado. Mide WPM, precisión y rendimiento en móvil o escritorio.",
+  "seoMobileBullet1": "Test de mecanografía en el móvil gratis",
+  "seoMobileBullet2": "Test de velocidad en el móvil (WPM y precisión)",
+  "seoMobileBullet3": "Diseño adaptado al teclado virtual (Android e iOS)",
+  "seoMobileBullet4": "Certificado digital tras el test",
+  "faqMobileTypingQ": "¿QuickDocTest funciona como test de mecanografía en el móvil?",
+  "faqMobileTypingA": "Sí. El test está optimizado para smartphones: el texto permanece visible cuando se abre el teclado virtual en Android e iOS.",
+  "faqMobileWpmQ": "¿Cómo medir la velocidad de mecanografía en el móvil?",
+  "faqMobileWpmA": "Elige la duración, toca el área de texto y escribe con normalidad. El sistema calcula WPM neto, precisión, CPM y más en tiempo real.",
+  "faqMobileCertQ": "¿Puedo obtener un certificado tras el test en el móvil?",
+  "faqMobileCertA": "Sí. Tras finalizar, inicia sesión con Google para descargar o enviar por correo tu certificado PDF A4 con tus métricas."
 }

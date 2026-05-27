@@ -150,5 +150,19 @@
   "rankPercentile_beginner": "Faixa dos 70% mundiais. Pratique diariamente para construir memória muscular.",
   "rankPercentile_intermediate": "Você equilibra perfeitamente a velocidade média global com foco no texto.",
   "rankPercentile_professional": "Você superou 70% da população global. Ritmo corporativo sólido e baixa latência.",
-  "rankPercentile_elite": "Você faz parte dos 10% mais rápidos do mundo. Ritmo impecável e excelente velocidade."
+  "rankPercentile_elite": "Você faz parte dos 10% mais rápidos do mundo. Ritmo impecável e excelente velocidade.",
+  "seoMobileH1": "Teste de Digitação no Celular — QuickDocTest",
+  "seoMobileTitle": "Teste de Digitação no Celular",
+  "seoMobileLead": "Velocidade, precisão e certificado digital — otimizado para smartphone.",
+  "seoMobileBody": "O QuickDocTest funciona em celulares e tablets com teclado virtual otimizado. Ao digitar, o texto do teste permanece visível acima do teclado, sem cobrir palavras ou linhas. Ideal para medir WPM, precisão e desempenho no mobile ou no desktop.",
+  "seoMobileBullet1": "Teste de digitação no celular grátis",
+  "seoMobileBullet2": "Teste de velocidade no celular (WPM e precisão)",
+  "seoMobileBullet3": "Layout adaptado ao teclado virtual (Android e iOS)",
+  "seoMobileBullet4": "Certificado digital após o teste",
+  "faqMobileTypingQ": "O QuickDocTest funciona como teste de digitação no celular?",
+  "faqMobileTypingA": "Sim. O teste foi otimizado para smartphones: o texto permanece visível quando o teclado virtual abre, em Android e iOS.",
+  "faqMobileWpmQ": "Como medir velocidade de digitação no celular?",
+  "faqMobileWpmA": "Escolha a duração, toque na área de texto e digite normalmente. O sistema calcula WPM líquido, precisão, CPM e outras métricas em tempo real.",
+  "faqMobileCertQ": "Posso emitir certificado após o teste no mobile?",
+  "faqMobileCertA": "Sim. Após concluir o teste, faça login com Google e baixe ou envie o certificado PDF A4 com suas métricas."
 }
