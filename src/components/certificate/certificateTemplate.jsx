@@ -1,8 +1,24 @@
-import { getCertificateSerial } from '@/utils/certificate/certificateMetrics';
+import { getCertificateMetricCards, getCertificateSerial } from '@/utils/certificate/certificateMetrics';
 
 export const CERTIFICATE_SIZE = {
   width: 841,
   height: 595,
+};
+
+const PAGE_MARGIN = 36;
+export const CERT_INNER_WIDTH = CERTIFICATE_SIZE.width - PAGE_MARGIN * 2;
+
+const GRID_COLUMNS = 5;
+const FIRST_PAGE_CARD_MAX = GRID_COLUMNS * 2;
+const CONTINUATION_PAGE_CARD_MAX = GRID_COLUMNS * 3;
+
+const boundedText = {
+  maxWidth: '100%',
+  width: '100%',
+  minWidth: 0,
+  boxSizing: 'border-box',
+  wordBreak: 'break-word',
+  overflowWrap: 'anywhere',
 };
 
 function formatDate(value) {
@@ -18,43 +34,161 @@ function formatDate(value) {
   }).format(date);
 }
 
+function fontByLength(text, tiers, fallback) {
+  const len = String(text || '').length;
+  for (const tier of tiers) {
+    if (len <= tier.maxLen) return tier.size;
+  }
+  return fallback;
+}
+
 export function buildCertificateTemplateModel({ results, user, copy, t }) {
   const safeCopy = copy || {};
-  const rankText = safeCopy.rankLine || t('certRankLine', { rank: safeCopy.rankLabel || '—' });
-  const issuedText = safeCopy.issuedOn || t('certIssuedOn', { date: results?.timestamp || '—' });
-  const durationText =
-    safeCopy.durationLabel || `${t('testDurationLabel')} · ${results?.testDuration || 30}s`;
+  const rankLabel = safeCopy.rankLabel || '—';
+  const rankText = safeCopy.rankLine || t('certRankLine', { rank: rankLabel });
+  const standard =
+    safeCopy.standard ||
+    t('certStandard', {
+      duration: results?.testDuration || 30,
+      lang: t(`lang_${results?.testLang || 'en'}`),
+    });
+
+  const ts = results?.timestamp;
+  const dateFormatted = ts ? formatDate(ts) : '—';
+  const issuedLine = t('certIssuedOn', { date: dateFormatted });
+
+  const name = user?.name || safeCopy.anonymous || t('certAnonymous');
+  const email = user?.email || '';
+  const serial = getCertificateSerial(results);
+
+  const metricCards =
+    safeCopy.metrics?.cards ||
+    getCertificateMetricCards(results, {
+      keystrokes: safeCopy.metrics?.labels?.keystrokes || t('certLabelKeystrokes'),
+      errors: safeCopy.metrics?.labels?.errors || t('certLabelErrors'),
+      latency: safeCopy.metrics?.labels?.latency || t('certLabelLatency'),
+      consistency: safeCopy.metrics?.labels?.consistency || t('certLabelConsistency'),
+      completion: safeCopy.metrics?.labels?.completion || t('certLabelCompletion'),
+    });
 
   return {
-    name: user?.name || safeCopy.anonymous || t('certAnonymous'),
+    name,
+    email,
     brandTitle: safeCopy.brandTitle || t('certBrandTitle'),
     title: safeCopy.title || t('certTitle'),
-    standard:
-      safeCopy.standard ||
-      t('certStandard', {
-        duration: results?.testDuration || 30,
-        lang: t(`lang_${results?.testLang || 'en'}`),
-      }),
+    standard,
     subtitle: safeCopy.subtitle || t('certSubtitle'),
     rankLine: rankText,
-    siteUrl: (safeCopy.siteUrl || t('certSiteUrl') || 'quickdoctest.com').toUpperCase(),
-    issuedLabel: issuedText.replace(/^.*?:\s*/, ''),
-    durationLabel: durationText.replace(/^.*·\s*/, ''),
-    validationHint:
-      safeCopy.validationHint || 'Store this serial with your test ID to verify in the future.',
-    serial: getCertificateSerial(results),
-    metrics: safeCopy.metrics || {
-      hero: [
-        { key: 'net', label: 'NET WPM', value: String(results?.netWpm ?? 0) },
-        { key: 'acc', label: 'ACCURACY', value: `${results?.accuracy ?? 0}%` },
-        { key: 'cpm', label: 'CPM', value: String(results?.cpm ?? 0) },
-      ],
-      secondary: [],
+    siteUrl: safeCopy.siteUrl || t('certSiteUrl') || 'www.quickdoctest.com',
+    issuedLine,
+    serialLine: `Serial: ${serial}`,
+    serial,
+    metricCards,
+    typeSizes: {
+      name: fontByLength(name, [
+        { maxLen: 22, size: 34 },
+        { maxLen: 34, size: 28 },
+        { maxLen: 48, size: 24 },
+      ], 20),
+      email: fontByLength(email, [{ maxLen: 36, size: 13 }, { maxLen: 52, size: 11 }], 10),
+      standard: fontByLength(standard, [{ maxLen: 48, size: 12 }, { maxLen: 72, size: 10 }], 9),
     },
   };
 }
 
-export function CertificateTemplate({ model, logoSrc }) {
+/** Divide métricas em páginas quando não couberem na primeira folha */
+export function paginateCertificatePages(model) {
+  const all = model.metricCards || [];
+  const totalPages =
+    all.length <= FIRST_PAGE_CARD_MAX
+      ? 1
+      : 1 + Math.ceil((all.length - FIRST_PAGE_CARD_MAX) / CONTINUATION_PAGE_CARD_MAX);
+
+  if (totalPages === 1) {
+    return [
+      {
+        variant: 'full',
+        cards: all,
+        showFooter: true,
+        pageNumber: 1,
+        totalPages: 1,
+      },
+    ];
+  }
+
+  const pages = [
+    {
+      variant: 'full',
+      cards: all.slice(0, FIRST_PAGE_CARD_MAX),
+      showFooter: false,
+      pageNumber: 1,
+      totalPages,
+    },
+  ];
+
+  let offset = FIRST_PAGE_CARD_MAX;
+  let pageNum = 2;
+  while (offset < all.length) {
+    const chunk = all.slice(offset, offset + CONTINUATION_PAGE_CARD_MAX);
+    offset += CONTINUATION_PAGE_CARD_MAX;
+    pages.push({
+      variant: 'continuation',
+      cards: chunk,
+      showFooter: offset >= all.length,
+      pageNumber: pageNum,
+      totalPages,
+    });
+    pageNum += 1;
+  }
+
+  return pages;
+}
+
+function MetricCard({ value, label }) {
+  return (
+    <div
+      style={{
+        background: 'rgba(255,255,255,0.96)',
+        borderRadius: 14,
+        border: '1px solid rgba(148,163,184,0.35)',
+        boxShadow: '0 4px 16px rgba(15,23,42,0.07)',
+        padding: '10px 8px',
+        minWidth: 0,
+        boxSizing: 'border-box',
+        textAlign: 'center',
+        overflow: 'hidden',
+      }}
+    >
+      <div
+        style={{
+          fontSize: 24,
+          fontWeight: 800,
+          color: '#0f172a',
+          lineHeight: 1.05,
+          ...boundedText,
+        }}
+      >
+        {value}
+      </div>
+      <div
+        style={{
+          marginTop: 5,
+          fontSize: 9,
+          fontWeight: 700,
+          letterSpacing: '0.1em',
+          textTransform: 'uppercase',
+          color: '#64748b',
+          lineHeight: 1.2,
+          ...boundedText,
+        }}
+      >
+        {label}
+      </div>
+    </div>
+  );
+}
+
+function CertificatePageFrame({ children }) {
   return (
     <div
       style={{
@@ -62,225 +196,305 @@ export function CertificateTemplate({ model, logoSrc }) {
         height: CERTIFICATE_SIZE.height,
         position: 'relative',
         overflow: 'hidden',
+        boxSizing: 'border-box',
         fontFamily: "'Inter', system-ui, sans-serif",
-        background: 'linear-gradient(135deg, #0f2f5e 0%, #173b70 45%, #31598b 100%)',
+        background: 'linear-gradient(145deg, #1e3a5f 0%, #2a5080 50%, #3d6a9e 100%)',
       }}
     >
-      <svg
-        width={CERTIFICATE_SIZE.width}
-        height={CERTIFICATE_SIZE.height}
-        viewBox={`0 0 ${CERTIFICATE_SIZE.width} ${CERTIFICATE_SIZE.height}`}
-        style={{ position: 'absolute', inset: 0 }}
-        aria-hidden
-      >
-        <defs>
-          <radialGradient id="orbLeft" cx="0.04" cy="0.92" r="0.35">
-            <stop offset="0" stopColor="#9ed3f0" stopOpacity="0.85" />
-            <stop offset="1" stopColor="#9ed3f0" stopOpacity="0" />
-          </radialGradient>
-          <radialGradient id="orbRight" cx="0.88" cy="0.5" r="0.38">
-            <stop offset="0" stopColor="#79b6df" stopOpacity="0.65" />
-            <stop offset="1" stopColor="#79b6df" stopOpacity="0" />
-          </radialGradient>
-        </defs>
-
-        <rect width={CERTIFICATE_SIZE.width} height={CERTIFICATE_SIZE.height} fill="rgba(12,35,70,0.66)" />
-        <circle cx="40" cy="550" r="175" fill="url(#orbLeft)" />
-        <circle cx="760" cy="305" r="225" fill="url(#orbRight)" />
-
-        {Array.from({ length: 7 }).map((_, i) => (
-          <circle
-            key={`ring-top-${i}`}
-            cx="226"
-            cy="-12"
-            r={62 + i * 12}
-            fill="none"
-            stroke="rgba(255,255,255,0.62)"
-            strokeWidth="1"
-          />
-        ))}
-        {Array.from({ length: 5 }).map((_, i) => (
-          <circle
-            key={`ring-bottom-${i}`}
-            cx="196"
-            cy="595"
-            r={56 + i * 12}
-            fill="none"
-            stroke="rgba(255,255,255,0.6)"
-            strokeWidth="1"
-          />
-        ))}
-        {Array.from({ length: 5 }).map((_, i) => (
-          <circle
-            key={`ring-right-${i}`}
-            cx="760"
-            cy="300"
-            r={120 + i * 40}
-            fill="none"
-            stroke="rgba(255,255,255,0.12)"
-            strokeWidth="2"
-          />
-        ))}
-      </svg>
-
       <div
         style={{
           position: 'absolute',
-          inset: 14,
-          border: '1px solid rgba(255,255,255,0.4)',
-          boxShadow: 'inset 0 0 0 2px rgba(11,28,58,0.65)',
+          inset: 12,
+          borderRadius: 6,
+          border: '1px solid rgba(255,255,255,0.35)',
           pointerEvents: 'none',
         }}
       />
       <div
         style={{
           position: 'absolute',
-          inset: 28,
-          border: '1px dashed rgba(255,255,255,0.2)',
-          pointerEvents: 'none',
-        }}
-      />
-
-      <div
-        style={{
-          position: 'absolute',
-          inset: 42,
+          inset: PAGE_MARGIN,
+          borderRadius: 10,
+          background: 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)',
+          boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.9), 0 8px 32px rgba(15,23,42,0.12)',
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-          textAlign: 'center',
-          color: '#fff',
+          overflow: 'hidden',
+          boxSizing: 'border-box',
         }}
       >
-        <img
-          src={logoSrc}
-          alt="QuickDocTest"
-          style={{
-            position: 'absolute',
-            left: 8,
-            top: 6,
-            width: 92,
-            height: 92,
-            objectFit: 'contain',
-          }}
-        />
-
-        <h1 style={{ margin: 0, marginTop: 8, fontSize: 56, fontWeight: 800 }}>{model.brandTitle}</h1>
-        <p style={{ margin: '10px 0 0', fontSize: 33, fontWeight: 800 }}>{model.title}</p>
-        <p style={{ margin: '10px 0 0', fontSize: 20, fontWeight: 800 }}>{model.standard}</p>
-        <p style={{ margin: '30px 0 0', fontSize: 38, fontWeight: 800, fontStyle: 'italic' }}>{model.subtitle}</p>
-        <h2 style={{ margin: '18px 0 0', fontSize: 66, fontWeight: 800, lineHeight: 1.06 }}>{model.name}</h2>
-        <p style={{ margin: '16px 0 0', fontSize: 44, fontWeight: 800 }}>{model.rankLine}</p>
-
-        <div
-          style={{
-            width: 540,
-            maxWidth: '100%',
-            height: 2,
-            marginTop: 28,
-            background: 'rgba(255,255,255,0.88)',
-          }}
-        />
-
-        <div
-          style={{
-            marginTop: 24,
-            width: 560,
-            maxWidth: '100%',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 16,
-          }}
-        >
-          {model.metrics.hero.map((metric) => (
-            <div
-              key={metric.key}
-              style={{
-                borderRadius: 12,
-                border: '1px solid rgba(255,255,255,0.45)',
-                background: 'linear-gradient(135deg, rgba(13,27,53,0.78), rgba(19,35,66,0.48))',
-                padding: '14px 10px',
-              }}
-            >
-              <div style={{ fontSize: 16, letterSpacing: '0.16em', fontWeight: 800 }}>{metric.label}</div>
-              <div style={{ marginTop: 8, fontSize: 34, fontWeight: 800, lineHeight: 1 }}>{metric.value}</div>
-            </div>
-          ))}
-        </div>
-
-        <div
-          style={{
-            marginTop: 22,
-            width: 560,
-            maxWidth: '100%',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 16,
-          }}
-        >
-          <div
-            style={{
-              borderRadius: 10,
-              border: '1px solid rgba(255,255,255,0.4)',
-              background: 'rgba(15,34,64,0.45)',
-              padding: '10px 12px',
-            }}
-          >
-            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.14em' }}>DATE</div>
-            <div style={{ marginTop: 5, fontSize: 19, fontWeight: 800 }}>{formatDate(model.issuedLabel)}</div>
-          </div>
-          <div
-            style={{
-              borderRadius: 10,
-              border: '1px solid rgba(255,255,255,0.4)',
-              background: 'rgba(15,34,64,0.45)',
-              padding: '10px 12px',
-            }}
-          >
-            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.14em' }}>DURATION</div>
-            <div style={{ marginTop: 5, fontSize: 19, fontWeight: 800 }}>{model.durationLabel}</div>
-          </div>
-          <div
-            style={{
-              borderRadius: 10,
-              border: '1px solid rgba(255,255,255,0.4)',
-              background: 'rgba(15,34,64,0.45)',
-              padding: '10px 12px',
-            }}
-          >
-            <div style={{ fontSize: 12, fontWeight: 800, letterSpacing: '0.14em' }}>VALIDATION</div>
-            <div style={{ marginTop: 5, fontSize: 15, fontWeight: 800 }}>{model.validationHint}</div>
-          </div>
-        </div>
-
-        <div
-          style={{
-            marginTop: 'auto',
-            marginBottom: 12,
-            fontSize: 17,
-            fontWeight: 800,
-            letterSpacing: '0.14em',
-            opacity: 0.98,
-          }}
-        >
-          {model.siteUrl}
-        </div>
-        <div
-          style={{
-            position: 'absolute',
-            right: 8,
-            bottom: 10,
-            fontSize: 14,
-            fontWeight: 800,
-            letterSpacing: '0.12em',
-            opacity: 0.88,
-            fontFamily: 'monospace',
-          }}
-        >
-          {model.serial}
-        </div>
+        {children}
       </div>
     </div>
   );
 }
 
+function FullHeader({ model, logoSrc }) {
+  const { typeSizes: ts } = model;
+  return (
+    <header style={{ textAlign: 'center', flexShrink: 0, paddingTop: 4 }}>
+      <img
+        src={logoSrc}
+        alt=""
+        aria-hidden
+        style={{
+          position: 'absolute',
+          left: 12,
+          top: 10,
+          width: 52,
+          height: 52,
+          objectFit: 'contain',
+        }}
+      />
+      <h1
+        style={{
+          margin: 0,
+          fontSize: 30,
+          fontWeight: 800,
+          color: '#0f172a',
+          letterSpacing: '-0.02em',
+          lineHeight: 1.1,
+          ...boundedText,
+        }}
+      >
+        {model.brandTitle}
+      </h1>
+      <p
+        style={{
+          margin: '6px 0 0',
+          fontSize: 17,
+          fontWeight: 700,
+          color: '#1e293b',
+          lineHeight: 1.15,
+          ...boundedText,
+        }}
+      >
+        {model.title}
+      </p>
+      <p
+        style={{
+          margin: '6px 0 0',
+          fontSize: ts.standard,
+          fontWeight: 600,
+          color: '#475569',
+          lineHeight: 1.25,
+          ...boundedText,
+        }}
+      >
+        {model.standard}
+      </p>
+      <p
+        style={{
+          margin: '18px 0 0',
+          fontSize: 14,
+          fontWeight: 600,
+          fontStyle: 'italic',
+          color: '#334155',
+          ...boundedText,
+        }}
+      >
+        {model.subtitle}
+      </p>
+      <h2
+        style={{
+          margin: '10px 0 0',
+          fontSize: ts.name,
+          fontWeight: 800,
+          color: '#0f172a',
+          lineHeight: 1.08,
+          ...boundedText,
+        }}
+      >
+        {model.name}
+      </h2>
+      {model.email ? (
+        <p
+          style={{
+            margin: '4px 0 0',
+            fontSize: ts.email,
+            fontWeight: 500,
+            color: '#64748b',
+            lineHeight: 1.2,
+            ...boundedText,
+          }}
+        >
+          {model.email}
+        </p>
+      ) : null}
+      <p
+        style={{
+          margin: '10px 0 0',
+          fontSize: 14,
+          fontWeight: 700,
+          color: '#2563eb',
+          lineHeight: 1.2,
+          ...boundedText,
+        }}
+      >
+        {model.rankLine}
+      </p>
+    </header>
+  );
+}
+
+function ContinuationHeader({ model }) {
+  const line = [model.brandTitle, model.title, model.name].filter(Boolean).join(' · ');
+  return (
+    <header
+      style={{
+        flexShrink: 0,
+        paddingBottom: 12,
+        borderBottom: '1px solid #e2e8f0',
+        marginBottom: 14,
+      }}
+    >
+      <p
+        style={{
+          margin: 0,
+          fontSize: 11,
+          fontWeight: 700,
+          color: '#64748b',
+          letterSpacing: '0.04em',
+          textTransform: 'uppercase',
+          lineHeight: 1.3,
+          ...boundedText,
+        }}
+      >
+        {line}
+      </p>
+    </header>
+  );
+}
+
+function PageFooter({ model }) {
+  return (
+    <footer
+      style={{
+        marginTop: 'auto',
+        paddingTop: 14,
+        flexShrink: 0,
+        borderTop: '1px solid #e2e8f0',
+      }}
+    >
+      <p
+        style={{
+          margin: 0,
+          textAlign: 'center',
+          fontSize: 13,
+          fontWeight: 700,
+          color: '#334155',
+          letterSpacing: '0.06em',
+          ...boundedText,
+        }}
+      >
+        {model.siteUrl}
+      </p>
+      <div
+        style={{
+          marginTop: 8,
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'space-between',
+          gap: 12,
+          minWidth: 0,
+        }}
+      >
+        <p
+          style={{
+            margin: 0,
+            fontSize: 10,
+            fontWeight: 600,
+            color: '#64748b',
+            flex: '1 1 auto',
+            minWidth: 0,
+            lineHeight: 1.3,
+            ...boundedText,
+          }}
+        >
+          {model.issuedLine}
+        </p>
+        <p
+          style={{
+            margin: 0,
+            fontSize: 9,
+            fontWeight: 500,
+            color: '#94a3b8',
+            fontFamily: 'monospace',
+            flex: '0 1 auto',
+            textAlign: 'right',
+            lineHeight: 1.3,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {model.serialLine}
+        </p>
+      </div>
+    </footer>
+  );
+}
+
+function CertificatePage({ model, page, logoSrc }) {
+  const gridWidth = Math.min(CERT_INNER_WIDTH - 48, 720);
+
+  return (
+    <div
+      className="certificate-page"
+      data-page={page.pageNumber}
+      data-total-pages={page.totalPages}
+      style={{ flexShrink: 0 }}
+    >
+      <CertificatePageFrame>
+        <div
+          style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '20px 24px 18px',
+            minHeight: 0,
+            overflow: 'hidden',
+            boxSizing: 'border-box',
+            position: 'relative',
+          }}
+        >
+          {page.variant === 'full' ? (
+            <FullHeader model={model} logoSrc={logoSrc} />
+          ) : (
+            <ContinuationHeader model={model} />
+          )}
+
+          <div
+            style={{
+              marginTop: page.variant === 'full' ? 16 : 0,
+              width: gridWidth,
+              maxWidth: '100%',
+              alignSelf: 'center',
+              display: 'grid',
+              gridTemplateColumns: `repeat(${GRID_COLUMNS}, minmax(0, 1fr))`,
+              gap: 10,
+              flexShrink: 0,
+              boxSizing: 'border-box',
+            }}
+          >
+            {page.cards.map((card) => (
+              <MetricCard key={card.key} value={card.value} label={card.label} />
+            ))}
+          </div>
+
+          {page.showFooter ? <PageFooter model={model} /> : null}
+        </div>
+      </CertificatePageFrame>
+    </div>
+  );
+}
+
+export function CertificateTemplate({ model, logoSrc }) {
+  const pages = paginateCertificatePages(model);
+
+  return (
+    <>
+      {pages.map((page) => (
+        <CertificatePage key={page.pageNumber} model={model} page={page} logoSrc={logoSrc} />
+      ))}
+    </>
+  );
+}

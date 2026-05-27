@@ -1,51 +1,22 @@
 import { downloadCertificatePdfFile } from '@/lib/certificatePdf';
 import { generateValidationUrl } from '@/utils/formatting/validationUrl';
 import { sendCertificateEmail } from '@/services/email/sendCertificateEmail';
-import {
-  getCertificateMetrics,
-  getCertificateRankLabel,
-} from '@/utils/certificate/certificateMetrics';
+import { buildCertificateCopy } from '@/services/certificate/certificateCopy';
+import { getCertificateRankLabel } from '@/utils/certificate/certificateMetrics';
 
-export function buildCertificateCopy(t, results) {
-  const rankLabel = getCertificateRankLabel(results, t);
-  return {
-    brandTitle: t('certBrandTitle'),
-    title: t('certTitle'),
-    standard: t('certStandard', {
-      duration: results.testDuration,
-      lang: t(`lang_${results.testLang}`),
-    }),
-    subtitle: t('certSubtitle'),
-    rankLabel,
-    rankLine: t('certRankLine', { rank: rankLabel }),
-    metricsTitle: t('certMetricsTitle'),
-    metrics: getCertificateMetrics(results, {
-      keystrokes: t('certLabelKeystrokes'),
-      errors: t('certLabelErrors'),
-      latency: t('certLabelLatency'),
-      consistency: t('certLabelConsistency'),
-      completion: t('certLabelCompletion'),
-    }),
-    anonymous: t('certAnonymous'),
-    auth: t('certAuth'),
-    issuedOn: t('certIssuedOn', { date: results.timestamp || '—' }),
-    durationLabel: `${t('testDurationLabel')} · ${results.testDuration || 30}s`,
-    validationHint: 'Store this serial with your test ID to verify in the future.',
-    siteUrl: t('certSiteUrl'),
-  };
-}
+export { buildCertificateCopy };
 
 export async function actionDownloadPdf({ user, results, copy }) {
   await downloadCertificatePdfFile({ user, results, copy });
   return { ok: true, action: 'download' };
 }
 
-export async function actionSendEmail({ user, results, lang }) {
+export async function actionSendEmail({ user, results, lang, copy }) {
   if (!user?.email) {
     return { ok: false, reason: 'no_email' };
   }
 
-  const res = await sendCertificateEmail({ user, results, lang });
+  const res = await sendCertificateEmail({ user, results, lang, copy });
   return { ...res, action: 'email' };
 }
 
@@ -75,4 +46,15 @@ export async function actionShareLink({ results, user, copy }) {
   }
 
   return { ok: false, reason: 'clipboard_unavailable' };
+}
+
+export function buildShareCopy(t, results, user) {
+  return {
+    shareTitle: t('certShareTitle'),
+    shareText: t('certShareText', {
+      name: user?.name || t('certAnonymous'),
+      wpm: results.netWpm,
+      rank: getCertificateRankLabel(results, t),
+    }),
+  };
 }

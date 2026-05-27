@@ -1,14 +1,14 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
+import { buildCertificateCopy } from '@/services/certificate/certificateCopy';
 import CertificateDocument, { A4_LANDSCAPE } from './CertificateDocument';
 import CertificateActions from './CertificateActions';
-import { setCertificatePreviewNode } from './certificatePreviewRegistry';
 
 export default function CertificateModal({ results, user, lang, onClose }) {
   const { t } = useI18n();
-  const previewRef = useRef(null);
+  const copy = useMemo(() => buildCertificateCopy(t, results), [t, results]);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -21,11 +21,6 @@ export default function CertificateModal({ results, user, lang, onClose }) {
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [onClose]);
-
-  useEffect(() => {
-    setCertificatePreviewNode(previewRef.current);
-    return () => setCertificatePreviewNode(null);
-  }, []);
 
   const handleClose = useCallback(
     (e) => {
@@ -77,8 +72,8 @@ export default function CertificateModal({ results, user, lang, onClose }) {
           className="mb-4"
         />
 
-        <div className="bg-white shadow-2xl rounded-md border border-slate-300 overflow-hidden mx-auto">
-          <CertificateDocument ref={previewRef} results={results} user={user} />
+        <div className="bg-white shadow-2xl rounded-md border border-slate-300 overflow-x-auto overflow-y-visible mx-auto">
+          <CertificateDocument results={results} user={user} copy={copy} previewStacked />
         </div>
 
         <p className="text-center text-xs qd-light-muted mt-3">

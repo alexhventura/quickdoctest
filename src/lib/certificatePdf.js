@@ -3,11 +3,18 @@ import { createRoot } from 'react-dom/client';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import CertificateDocument, { A4_LANDSCAPE } from '@/components/certificate/CertificateDocument';
-import { getCertificatePreviewNode } from '@/components/certificate/certificatePreviewRegistry';
 import { PAGE_MM } from '@/constants/certificateLayout';
 
 function waitFrame() {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+function isIOSSafari() {
+  if (typeof navigator === 'undefined') return false;
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  );
 }
 
 async function waitImages(node) {
@@ -23,61 +30,67 @@ async function waitImages(node) {
   );
 }
 
-async function renderCertificateToDataUrl({ user, results, copy }) {
+const CAPTURE_OPTS = {
+  backgroundColor: null,
+  scale: 2,
+  useCORS: true,
+  allowTaint: false,
+  logging: false,
+  width: A4_LANDSCAPE.width,
+  height: A4_LANDSCAPE.height,
+  windowWidth: A4_LANDSCAPE.width,
+  windowHeight: A4_LANDSCAPE.height,
+  scrollX: 0,
+  scrollY: 0,
+};
+
+/**
+ * Renderiza off-screen com o mesmo CertificateDocument usado na prévia.
+ * Captura cada `.certificate-page` separadamente para paginação correta no PDF.
+ */
+async function renderCertificatePagesToDataUrls({ user, results, copy }) {
   if (typeof window === 'undefined') {
     throw new Error('Certificate export requires browser environment');
-  }
-
-  const livePreviewNode = getCertificatePreviewNode();
-  if (livePreviewNode) {
-    await document.fonts?.ready;
-    await waitImages(livePreviewNode);
-    const liveCanvas = await html2canvas(livePreviewNode, {
-      backgroundColor: null,
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      width: A4_LANDSCAPE.width,
-      height: A4_LANDSCAPE.height,
-    });
-    return liveCanvas.toDataURL('image/png', 1);
   }
 
   document.getElementById('qd-pdf-capture-host')?.remove();
   const host = document.createElement('div');
   host.id = 'qd-pdf-capture-host';
-  host.style.position = 'fixed';
-  host.style.left = '-10000px';
-  host.style.top = '0';
-  host.style.width = `${A4_LANDSCAPE.width}px`;
-  host.style.height = `${A4_LANDSCAPE.height}px`;
-  host.style.pointerEvents = 'none';
-  host.style.opacity = '1';
-  host.style.zIndex = '-1';
+  host.setAttribute('aria-hidden', 'true');
+  host.style.cssText = [
+    'position:fixed',
+    'left:0',
+    'top:0',
+    'pointer-events:none',
+    'opacity:0',
+    'z-index:-1',
+    'overflow:hidden',
+  ].join(';');
   document.body.appendChild(host);
 
   const root = createRoot(host);
   try {
-    root.render(createElement(CertificateDocument, { results, user, copy }));
+    root.render(
+      createElement(CertificateDocument, { results, user, copy, previewStacked: false }),
+    );
     await waitFrame();
     await waitFrame();
     await document.fonts?.ready;
 
-    const node = host.querySelector('#certificado-container');
-    if (!node) throw new Error('Certificate node not mounted');
+    const container = host.querySelector('#certificado-container');
+    if (!container) throw new Error('Certificate node not mounted');
 
-    await waitImages(node);
+    await waitImages(container);
 
-    const canvas = await html2canvas(node, {
-      backgroundColor: null,
-      scale: 2,
-      useCORS: true,
-      logging: false,
-      width: A4_LANDSCAPE.width,
-      height: A4_LANDSCAPE.height,
-    });
+    const pages = Array.from(container.querySelectorAll('.certificate-page'));
+    if (pages.length === 0) throw new Error('Certificate pages not found');
 
-    return canvas.toDataURL('image/png', 1);
+    const dataUrls = [];
+    for (const pageEl of pages) {
+      const canvas = await html2canvas(pageEl, CAPTURE_OPTS);
+      dataUrls.push(canvas.toDataURL('image/png', 1));
+    }
+    return dataUrls;
   } finally {
     root.unmount();
     host.remove();
@@ -86,8 +99,13 @@ async function renderCertificateToDataUrl({ user, results, copy }) {
 
 export async function buildCertificatePdf({ user, results, copy }) {
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-  const imageData = await renderCertificateToDataUrl({ user, results, copy });
-  pdf.addImage(imageData, 'PNG', 0, 0, PAGE_MM.w, PAGE_MM.h);
+  const pageImages = await renderCertificatePagesToDataUrls({ user, results, copy });
+
+  pageImages.forEach((imageData, index) => {
+    if (index > 0) pdf.addPage('a4', 'landscape');
+    pdf.addImage(imageData, 'PNG', 0, 0, PAGE_MM.w, PAGE_MM.h);
+  });
+
   return pdf;
 }
 
@@ -101,8 +119,9 @@ export async function downloadCertificatePdfFile({ user, results, copy }) {
   const filename = getCertificateFileName(user, results);
   const blob = pdf.output('blob');
   const blobUrl = URL.createObjectURL(blob);
+  const ios = isIOSSafari();
 
-  try {
+  const triggerAnchorDownload = () => {
     const anchor = document.createElement('a');
     anchor.href = blobUrl;
     anchor.download = filename;
@@ -111,16 +130,19 @@ export async function downloadCertificatePdfFile({ user, results, copy }) {
     document.body.appendChild(anchor);
     anchor.click();
     anchor.remove();
+  };
 
-    // iOS Safari pode ignorar `download`; abre nova aba como fallback.
-    const isIOS =
-      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-    if (isIOS) {
-      window.open(blobUrl, '_blank', 'noopener,noreferrer');
+  try {
+    if (ios) {
+      const opened = window.open(blobUrl, '_blank', 'noopener,noreferrer');
+      if (!opened) {
+        triggerAnchorDownload();
+      }
+    } else {
+      triggerAnchorDownload();
     }
   } finally {
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 30_000);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
   }
 
   return { ok: true };
@@ -128,4 +150,21 @@ export async function downloadCertificatePdfFile({ user, results, copy }) {
 
 export async function getCertificatePdfBlob({ user, results, copy }) {
   return (await buildCertificatePdf({ user, results, copy })).output('blob');
+}
+
+export async function getCertificatePdfBase64({ user, results, copy }) {
+  const blob = await getCertificatePdfBlob({ user, results, copy });
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result;
+      if (typeof dataUrl !== 'string') {
+        reject(new Error('Failed to read PDF blob'));
+        return;
+      }
+      resolve(dataUrl.split(',')[1] || '');
+    };
+    reader.onerror = () => reject(reader.error || new Error('Failed to read PDF blob'));
+    reader.readAsDataURL(blob);
+  });
 }
