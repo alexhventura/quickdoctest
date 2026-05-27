@@ -58,6 +58,8 @@ function Header({ themeStyles }) {
           src={qtLogo}
           alt=""
           className="h-8 w-auto sm:h-9 shrink-0 object-contain"
+          decoding="async"
+          fetchPriority="high"
         />
         <div className="flex items-baseline gap-1.5 min-w-0">
           <span

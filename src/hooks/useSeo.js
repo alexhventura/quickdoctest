@@ -1,14 +1,19 @@
 import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
+  DEFAULT_KEYWORDS,
   DEFAULT_DESCRIPTION,
   DEFAULT_TITLE,
   HREFLANG_MAP,
   LOCALE_PATHS,
   OG_IMAGE,
   SEO_BY_LANG,
+  SITE_AUTHOR,
+  SITE_CATEGORY,
+  SITE_LOGO,
   SITE_NAME,
   SITE_URL,
+  TWITTER_CARD,
 } from '@/constants/seo';
 import { getGoogleSiteVerification } from '@/lib/env';
 import { trackPageView } from '@/lib/analytics';
@@ -47,7 +52,7 @@ function stripLocalePrefix(pathname) {
   return rest || '';
 }
 
-export function useSeo({ title, description, lang = 'en' } = {}) {
+export function useSeo({ title, description, lang = 'en', faqItems = [] } = {}) {
   const { pathname } = useLocation();
   const localeMeta = SEO_BY_LANG[lang] || SEO_BY_LANG.en;
   const pageTitle = title || localeMeta.title || DEFAULT_TITLE;
@@ -55,11 +60,27 @@ export function useSeo({ title, description, lang = 'en' } = {}) {
   const suffixPath = stripLocalePrefix(pathname);
   const canonicalUrl = `${SITE_URL}/${lang}${suffixPath}`;
 
+  function upsertJsonLd(id, schema) {
+    let script = document.querySelector(`script[data-qd-jsonld="${id}"]`);
+    if (!script) {
+      script = document.createElement('script');
+      script.type = 'application/ld+json';
+      script.dataset.qdJsonld = id;
+      document.head.appendChild(script);
+    }
+    script.textContent = JSON.stringify(schema);
+  }
+
   useEffect(() => {
     document.title = pageTitle;
     document.documentElement.lang = HREFLANG_MAP[lang] || 'en';
 
     upsertMeta('name', 'description', pageDescription);
+    upsertMeta('name', 'keywords', DEFAULT_KEYWORDS);
+    upsertMeta('name', 'author', SITE_AUTHOR);
+    upsertMeta('name', 'creator', SITE_NAME);
+    upsertMeta('name', 'publisher', SITE_NAME);
+    upsertMeta('name', 'robots', 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
     upsertMeta('name', 'google-site-verification', getGoogleSiteVerification());
 
     upsertLink('canonical', canonicalUrl);
@@ -72,10 +93,11 @@ export function useSeo({ title, description, lang = 'en' } = {}) {
     upsertMeta('property', 'og:image', OG_IMAGE);
     upsertMeta('property', 'og:locale', HREFLANG_MAP[lang] || 'en');
 
-    upsertMeta('name', 'twitter:card', 'summary_large_image');
+    upsertMeta('name', 'twitter:card', TWITTER_CARD);
     upsertMeta('name', 'twitter:title', pageTitle);
     upsertMeta('name', 'twitter:description', pageDescription);
     upsertMeta('name', 'twitter:image', OG_IMAGE);
+    upsertMeta('name', 'twitter:url', canonicalUrl);
 
     document.querySelectorAll('link[data-qd-hreflang]').forEach((n) => n.remove());
 
@@ -96,6 +118,56 @@ export function useSeo({ title, description, lang = 'en' } = {}) {
     xDefault.dataset.qdHreflang = '1';
     document.head.appendChild(xDefault);
 
+    upsertJsonLd('organization', {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name: SITE_NAME,
+      url: SITE_URL,
+      logo: SITE_LOGO,
+    });
+
+    upsertJsonLd('software-application', {
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: SITE_NAME,
+      description: pageDescription,
+      applicationCategory: SITE_CATEGORY,
+      operatingSystem: 'Web',
+      url: canonicalUrl,
+      offers: {
+        '@type': 'Offer',
+        price: '0',
+        priceCurrency: 'USD',
+      },
+    });
+
+    upsertJsonLd('web-application', {
+      '@context': 'https://schema.org',
+      '@type': 'WebApplication',
+      name: SITE_NAME,
+      url: canonicalUrl,
+      description: pageDescription,
+      browserRequirements: 'Requires JavaScript and modern browser',
+      inLanguage: HREFLANG_MAP[lang] || 'en',
+    });
+
+    if (Array.isArray(faqItems) && faqItems.length > 0) {
+      upsertJsonLd('faq-page', {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: faqItems.map((item) => ({
+          '@type': 'Question',
+          name: item.question,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: item.answer,
+          },
+        })),
+      });
+    } else {
+      document.querySelector('script[data-qd-jsonld="faq-page"]')?.remove();
+    }
+
     trackPageView(`/${lang}${suffixPath}`, pageTitle);
-  }, [pageTitle, pageDescription, canonicalUrl, lang, suffixPath]);
+  }, [pageTitle, pageDescription, canonicalUrl, lang, suffixPath, faqItems]);
 }

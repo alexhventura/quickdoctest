@@ -23,7 +23,21 @@ export default function QuickDocApp() {
   const themeStyles = useMemo(() => getThemeStyles(theme), [theme]);
   const [emailStatus, setEmailStatus] = useState(null);
 
-  useSeo({ lang });
+  useSeo({
+    lang,
+    faqItems: [
+      {
+        question: 'What is QuickDocTest used for?',
+        answer:
+          'QuickDocTest helps users measure typing speed, accuracy, and overall performance with standardized metrics.',
+      },
+      {
+        question: 'Does QuickDocTest support PDF-related workflows?',
+        answer:
+          'QuickDocTest is expanding SEO-ready pages for PDF tools including compression, merge, and text extraction.',
+      },
+    ],
+  });
 
   const onEmailStatus = useCallback((status) => setEmailStatus(status), []);
 
@@ -60,6 +74,7 @@ export default function QuickDocApp() {
       </div>
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-8 lg:px-6 grid grid-cols-1 lg:grid-cols-5 gap-6">
+        <h1 className="sr-only">QuickDocTest Professional Typing and PDF Tools Platform</h1>
         <div className="qd-dim-when-focus qd-side-blur hidden lg:block">
           <AdSidebar />
         </div>

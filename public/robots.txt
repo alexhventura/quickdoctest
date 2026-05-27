@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
+Disallow: /api/
+Disallow: /_internal/
+Disallow: /tmp/
+Disallow: /*.tmp$
 
 Sitemap: https://www.quickdoctest.com/sitemap.xml
