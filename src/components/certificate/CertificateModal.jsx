@@ -2,8 +2,7 @@ import { useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
-import CertificateDocument from './CertificateDocument';
-import { A4_LANDSCAPE } from '@/constants/certificateLayout';
+import CertificateDocument, { A4_LANDSCAPE } from './CertificateDocument';
 import CertificateActions from './CertificateActions';
 import { setCertificatePreviewNode } from './certificatePreviewRegistry';
 
