@@ -1,2 +1,2 @@
 export { getThemeStyles } from './theme';
-export { downloadCertificatePdf } from './pdf';
+export { downloadCertificatePdfFile as downloadCertificatePdf } from './certificatePdf';

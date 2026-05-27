@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import CertificateDocument, { A4_LANDSCAPE } from '@/components/certificate/CertificateDocument';
+import { getCertificatePreviewNode } from '@/components/certificate/certificatePreviewRegistry';
 import { PAGE_MM } from '@/constants/certificateLayout';
 
 function waitFrame() {
@@ -25,6 +26,21 @@ async function waitImages(node) {
 async function renderCertificateToDataUrl({ user, results, copy }) {
   if (typeof window === 'undefined') {
     throw new Error('Certificate export requires browser environment');
+  }
+
+  const livePreviewNode = getCertificatePreviewNode();
+  if (livePreviewNode) {
+    await document.fonts?.ready;
+    await waitImages(livePreviewNode);
+    const liveCanvas = await html2canvas(livePreviewNode, {
+      backgroundColor: null,
+      scale: 2,
+      useCORS: true,
+      logging: false,
+      width: A4_LANDSCAPE.width,
+      height: A4_LANDSCAPE.height,
+    });
+    return liveCanvas.toDataURL('image/png', 1);
   }
 
   document.getElementById('qd-pdf-capture-host')?.remove();
@@ -82,7 +98,31 @@ export function getCertificateFileName(user, results) {
 
 export async function downloadCertificatePdfFile({ user, results, copy }) {
   const pdf = await buildCertificatePdf({ user, results, copy });
-  pdf.save(getCertificateFileName(user, results));
+  const filename = getCertificateFileName(user, results);
+  const blob = pdf.output('blob');
+  const blobUrl = URL.createObjectURL(blob);
+
+  try {
+    const anchor = document.createElement('a');
+    anchor.href = blobUrl;
+    anchor.download = filename;
+    anchor.rel = 'noopener';
+    anchor.style.display = 'none';
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+
+    // iOS Safari pode ignorar `download`; abre nova aba como fallback.
+    const isIOS =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if (isIOS) {
+      window.open(blobUrl, '_blank', 'noopener,noreferrer');
+    }
+  } finally {
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 30_000);
+  }
+
   return { ok: true };
 }
 

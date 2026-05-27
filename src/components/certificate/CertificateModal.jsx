@@ -1,13 +1,15 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
 import CertificateDocument from './CertificateDocument';
 import { A4_LANDSCAPE } from '@/constants/certificateLayout';
 import CertificateActions from './CertificateActions';
+import { setCertificatePreviewNode } from './certificatePreviewRegistry';
 
 export default function CertificateModal({ results, user, lang, onClose }) {
   const { t } = useI18n();
+  const previewRef = useRef(null);
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -20,6 +22,11 @@ export default function CertificateModal({ results, user, lang, onClose }) {
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [onClose]);
+
+  useEffect(() => {
+    setCertificatePreviewNode(previewRef.current);
+    return () => setCertificatePreviewNode(null);
+  }, []);
 
   const handleClose = useCallback(
     (e) => {
@@ -72,7 +79,7 @@ export default function CertificateModal({ results, user, lang, onClose }) {
         />
 
         <div className="bg-white shadow-2xl rounded-md border border-slate-300 overflow-hidden mx-auto">
-          <CertificateDocument results={results} user={user} />
+          <CertificateDocument ref={previewRef} results={results} user={user} />
         </div>
 
         <p className="text-center text-xs qd-light-muted mt-3">
