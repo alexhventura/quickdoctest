@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useI18n } from '@/contexts/I18nContext';
+import { useDeviceProfile } from '@/hooks/useDeviceProfile';
 import { buildCertificateCopy } from '@/services/certificate/certificateCopy';
 import CertificateDocument, { A4_LANDSCAPE } from './CertificateDocument';
 import CertificateActions from './CertificateActions';
@@ -11,7 +12,9 @@ import { buildCertificateTemplateModel, paginateCertificatePages } from './certi
 
 export default function CertificateModal({ results, user, lang, onClose }) {
   const { t } = useI18n();
+  const deviceProfile = useDeviceProfile();
   const previewRef = useRef(null);
+  const previewMatchesPdf = Boolean(deviceProfile?.isMobileLike);
   const copy = useMemo(() => buildCertificateCopy(t, results), [t, results]);
   const pageCount = useMemo(
     () => paginateCertificatePages(buildCertificateTemplateModel({ results, user, copy, t })).length,
@@ -103,6 +106,7 @@ export default function CertificateModal({ results, user, lang, onClose }) {
               user={user}
               copy={copy}
               previewStacked
+              forPdfExport={previewMatchesPdf}
             />
           </CertificatePreviewScaler>
         </div>

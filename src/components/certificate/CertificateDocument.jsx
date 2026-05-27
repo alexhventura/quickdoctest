@@ -37,7 +37,7 @@ export const CertificateDocumentInner = forwardRef(function CertificateDocumentI
 });
 
 const CertificateDocument = forwardRef(function CertificateDocument(
-  { results, user, copy, previewStacked = true },
+  { results, user, copy, previewStacked = true, forPdfExport = false },
   ref,
 ) {
   const { t } = useI18n();
@@ -50,6 +50,7 @@ const CertificateDocument = forwardRef(function CertificateDocument(
       model={model}
       previewStacked={previewStacked}
       pageCount={pageCount}
+      forPdfExport={forPdfExport}
     />
   );
 });

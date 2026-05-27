@@ -13,7 +13,7 @@ import {
 } from '@/services/replay/keystrokeTimeline';
 import { sendCertificateEmail } from '@/services/email/sendCertificateEmail';
 import { fireConfetti } from '@/lib/confetti';
-import { getTestDeviceType } from '@/utils/device/getTestDeviceType';
+import { resolveTestDeviceFromProfile } from '@/utils/device/getTestDeviceType';
 import { usePerformanceMetrics } from './usePerformanceMetrics';
 import { useRealtimeTimer } from './useRealtimeTimer';
 
@@ -49,6 +49,7 @@ export function useTypingRealtimeEngine({ lang, user, onEmailStatus, deviceProfi
   const loadingRafRef = useRef(null);
   const inputFocusTsRef = useRef(0);
   const testDeviceTypeRef = useRef('desktop');
+  const testDeviceDetailRef = useRef('');
   const mobileSignalsRef = useRef({
     reactionMs: 0,
     autoCorrectCount: 0,
@@ -144,6 +145,7 @@ export function useTypingRealtimeEngine({ lang, user, onEmailStatus, deviceProfi
       lang,
     });
     finalResults.deviceType = testDeviceTypeRef.current;
+    finalResults.deviceDetail = testDeviceDetailRef.current;
     if (deviceProfile?.isMobileLike) {
       finalResults.mobileMetrics = {
         speed: finalResults.netWpm,
@@ -230,7 +232,9 @@ export function useTypingRealtimeEngine({ lang, user, onEmailStatus, deviceProfi
       swipeLikeCount: 0,
     };
     inputFocusTsRef.current = 0;
-    testDeviceTypeRef.current = getTestDeviceType();
+    const device = resolveTestDeviceFromProfile(deviceProfile);
+    testDeviceTypeRef.current = device.type;
+    testDeviceDetailRef.current = device.detail;
 
     chartDataRef.current = [];
     inputLengthRef.current = 0;
@@ -252,7 +256,7 @@ export function useTypingRealtimeEngine({ lang, user, onEmailStatus, deviceProfi
 
     updateHud(duration, 0);
     setTimeout(() => typingAreaRef.current?.focus(), 50);
-  }, [lang, duration, timer, metrics, updateHud]);
+  }, [lang, duration, timer, metrics, updateHud, deviceProfile]);
 
   useEffect(() => {
     durationRef.current = duration;

@@ -166,6 +166,7 @@
   "faqMobileCertQ": "Can I get a certificate after a mobile typing test?",
   "faqMobileCertA": "Yes. After finishing, sign in with Google to download or email your A4 PDF certificate with your metrics.",
   "certDeviceUsed": "Device used for the test: {{device}}",
+  "certDeviceUsedWithDetail": "Device used for the test: {{device}} ({{detail}})",
   "deviceType_desktop": "Desktop",
   "deviceType_tablet": "Tablet",
   "deviceType_mobile": "Mobile",

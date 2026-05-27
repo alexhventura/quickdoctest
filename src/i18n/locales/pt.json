@@ -166,6 +166,7 @@
   "faqMobileCertQ": "Posso emitir certificado após o teste no mobile?",
   "faqMobileCertA": "Sim. Após concluir o teste, faça login com Google e baixe ou envie o certificado PDF A4 com suas métricas.",
   "certDeviceUsed": "Dispositivo utilizado no teste: {{device}}",
+  "certDeviceUsedWithDetail": "Dispositivo utilizado no teste: {{device}} ({{detail}})",
   "deviceType_desktop": "Desktop",
   "deviceType_tablet": "Tablet",
   "deviceType_mobile": "Celular",

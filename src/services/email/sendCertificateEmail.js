@@ -4,6 +4,7 @@ import { getCertificatePdfBase64, getCertificateFileName } from '@/lib/certifica
 import { buildCertificateCopy } from '@/services/certificate/certificateCopy';
 import { generateValidationUrl } from '@/utils/formatting/validationUrl';
 import { getCertificateRankLabel } from '@/utils/certificate/certificateMetrics';
+import { buildCertificateDeviceLine } from '@/utils/device/getTestDeviceType';
 
 function tForLang(lang) {
   return (key, opts) => i18n.t(key, { lng: lang, ...opts });
@@ -35,6 +36,7 @@ function buildEmailBody({ user, results, lang, issuedDate, hasPdf }) {
     `${i18n.t('certSubtitle', { lng: lang })} ${user.name}`,
     `E-mail: ${user.email}`,
     `${i18n.t('certRankLine', { lng: lang, rank })}`,
+    buildCertificateDeviceLine(results, tForLang(lang)),
     '',
     `NET WPM: ${results.netWpm}`,
     `ACCURACY: ${results.accuracy}%`,

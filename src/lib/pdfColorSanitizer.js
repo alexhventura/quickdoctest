@@ -16,6 +16,8 @@ const COLOR_PROPERTIES = [
 
 const FONT_STYLESHEET_HINT = /fonts\.googleapis\.com|fonts\.gstatic\.com/i;
 
+const PDF_EXPORT_FONT_STACK = "Arial, 'Helvetica Neue', Helvetica, sans-serif";
+
 let colorNormalizeCanvas = null;
 
 function getColorNormalizeContext() {
@@ -57,10 +59,28 @@ function shouldKeepStylesheet(node) {
   return FONT_STYLESHEET_HINT.test(href);
 }
 
-/**
- * Remove folhas de estilo globais (Tailwind/lab) do clone e força cores seguras.
- * Preserva Google Fonts — remover a folha da Inter quebra espaços no html2canvas.
- */
+/** Garante espaçamento de texto no clone (html2canvas em mobile costuma colapsar letras). */
+export function applyPdfExportTypography(clonedDoc, rootId = 'qd-pdf-capture-host') {
+  const root =
+    clonedDoc.getElementById(rootId) ||
+    clonedDoc.getElementById('certificado-container') ||
+    clonedDoc.body;
+
+  if (!root) return;
+
+  const nodes = [root, ...root.querySelectorAll('*')];
+  nodes.forEach((el) => {
+    if (el.tagName === 'IMG') return;
+    el.style.setProperty('font-family', PDF_EXPORT_FONT_STACK, 'important');
+    el.style.setProperty('letter-spacing', 'normal', 'important');
+    el.style.setProperty('word-spacing', 'normal', 'important');
+    el.style.setProperty('font-kerning', 'normal', 'important');
+    el.style.setProperty('font-variant-ligatures', 'none', 'important');
+    el.style.setProperty('text-rendering', 'geometricPrecision', 'important');
+  });
+}
+
+/** Remove folhas globais (Tailwind/lab) do clone e força cores e tipografia seguras para PDF. */
 export function sanitizeCloneForPdfExport(clonedDoc, rootId = 'qd-pdf-capture-host') {
   clonedDoc.querySelectorAll('link[rel="stylesheet"], style').forEach((node) => {
     if (!shouldKeepStylesheet(node)) {
@@ -68,7 +88,10 @@ export function sanitizeCloneForPdfExport(clonedDoc, rootId = 'qd-pdf-capture-ho
     }
   });
 
-  const root = clonedDoc.getElementById(rootId);
+  const root =
+    clonedDoc.getElementById(rootId) ||
+    clonedDoc.getElementById('certificado-container') ||
+    clonedDoc.body;
   if (!root) return;
 
   const view = clonedDoc.defaultView;
@@ -105,4 +128,6 @@ export function sanitizeCloneForPdfExport(clonedDoc, rootId = 'qd-pdf-capture-ho
       el.style.setProperty('box-shadow', 'none', 'important');
     }
   });
+
+  applyPdfExportTypography(clonedDoc, rootId);
 }

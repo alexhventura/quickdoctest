@@ -1,6 +1,8 @@
+import { CERTIFICATE_SIZE } from '@/components/certificate/certificateTemplate';
 import { PDF_EXPORT_BASE_CSS } from '@/components/certificate/certificatePdfStyles';
 
 const FRAME_ID = 'qd-pdf-capture-iframe';
+const FRAME_PAD = 24;
 
 function waitMs(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -16,12 +18,15 @@ export async function createPdfExportFrame() {
   iframe.id = FRAME_ID;
   iframe.setAttribute('aria-hidden', 'true');
   iframe.setAttribute('title', 'PDF export');
+  const frameW = CERTIFICATE_SIZE.width + FRAME_PAD;
+  const frameH = CERTIFICATE_SIZE.height + FRAME_PAD;
+
   iframe.style.cssText = [
     'position:fixed',
     'left:0',
     `top:${typeof window !== 'undefined' ? window.innerHeight + 8 : 0}px`,
-    'width:900px',
-    'height:1400px',
+    `width:${frameW}px`,
+    `height:${frameH}px`,
     'border:0',
     'opacity:1',
     'visibility:visible',

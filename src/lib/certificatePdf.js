@@ -8,7 +8,9 @@ import qtLogoUrl from '@/assets/QT_V2.png';
 import { CertificateDocumentInner, A4_LANDSCAPE } from '@/components/certificate/CertificateDocument';
 import { buildCertificateTemplateModel } from '@/components/certificate/certificateTemplate';
 import { PAGE_MM } from '@/constants/certificateLayout';
+import { CERTIFICATE_SIZE } from '@/components/certificate/certificateTemplate';
 import { createPdfExportFrame, destroyPdfExportFrame } from '@/lib/pdfExportFrame';
+import { sanitizeCloneForPdfExport } from '@/lib/pdfColorSanitizer';
 
 function waitFrame() {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
@@ -96,7 +98,12 @@ async function mountExportCertificate({ user, results, copy, lang }) {
 
   await waitFrame();
   await waitFrame();
-  await waitMs(500);
+  const layoutWait = /Mobi|Android|iPhone|iPad/i.test(
+    typeof navigator !== 'undefined' ? navigator.userAgent : '',
+  )
+    ? 900
+    : 500;
+  await waitMs(layoutWait);
 
   const container = mount.querySelector('#certificado-container');
   if (!container) {
@@ -126,18 +133,33 @@ function cleanupExportMount(root) {
   destroyPdfExportFrame();
 }
 
+function getCaptureScale(win) {
+  const dpr = win?.devicePixelRatio || (typeof window !== 'undefined' ? window.devicePixelRatio : 1) || 1;
+  return Math.min(2, Math.max(1, dpr));
+}
+
 async function rasterizePageElement(pageEl) {
   const target = getPageCaptureTarget(pageEl);
+  const doc = target.ownerDocument;
+  const win = doc?.defaultView;
+  const scale = getCaptureScale(win);
 
   const canvas = await html2canvas(target, {
+    window: win,
     backgroundColor: '#ffffff',
-    scale: 2,
+    scale,
+    width: CERTIFICATE_SIZE.width,
+    height: CERTIFICATE_SIZE.height,
     useCORS: true,
     allowTaint: false,
     logging: false,
     scrollX: 0,
     scrollY: 0,
     imageTimeout: 20000,
+    foreignObjectRendering: false,
+    onclone: (clonedDoc) => {
+      sanitizeCloneForPdfExport(clonedDoc);
+    },
   });
 
   let dataUrl = '';

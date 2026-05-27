@@ -1,5 +1,5 @@
 import { getCertificateMetricCards, getCertificateSerial } from '@/utils/certificate/certificateMetrics';
-import { getTestDeviceTypeLabel } from '@/utils/device/getTestDeviceType';
+import { buildCertificateDeviceLine } from '@/utils/device/getTestDeviceType';
 import { PDF_COLORS, PDF_HEADER_TYPE, getCertificateFont } from './certificatePdfStyles';
 
 export const CERTIFICATE_SIZE = {
@@ -80,8 +80,8 @@ export function buildCertificateTemplateModel({ results, user, copy, t }) {
       completion: safeCopy.metrics?.labels?.completion || t('certLabelCompletion'),
     });
 
-  const deviceLabel = getTestDeviceTypeLabel(results?.deviceType, t);
-  const deviceLine = t('certDeviceUsed', { device: deviceLabel });
+  const deviceLine = buildCertificateDeviceLine(results, t);
+  const isMobileDeviceTest = results?.deviceType === 'mobile' || results?.deviceType === 'tablet';
 
   return {
     name,
@@ -92,6 +92,7 @@ export function buildCertificateTemplateModel({ results, user, copy, t }) {
     subtitle: safeCopy.subtitle || t('certSubtitle'),
     rankLine: rankText,
     deviceLine,
+    isMobileDeviceTest,
     siteUrl: safeCopy.siteUrl || t('certSiteUrl') || 'www.quickdoctest.com',
     issuedLine,
     serialLine: `Serial: ${serial}`,
@@ -365,9 +366,9 @@ function FullHeader({ model, logoSrc }) {
       <p
         style={{
           margin: '8px 0 0',
-          fontSize: 11,
-          fontWeight: 600,
-          color: PDF_COLORS.slate500,
+          fontSize: model.isMobileDeviceTest ? 11.5 : 11,
+          fontWeight: model.isMobileDeviceTest ? 700 : 600,
+          color: model.isMobileDeviceTest ? PDF_COLORS.blue600 : PDF_COLORS.slate500,
           letterSpacing: 'normal',
           lineHeight: PDF_HEADER_TYPE.rank.lineHeight,
           ...headerText,
