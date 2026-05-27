@@ -286,40 +286,82 @@ html:not(.dark) .qd-duration-btn:hover {
   font-size: 0.72rem;
 }
 
-/* Mobile: bloco do teste ~50% da viewport, centralizado, sem sair da tela */
+/* Teclado virtual: trava scroll da página */
+html.qd-keyboard-open,
+body.qd-keyboard-open {
+  overflow: hidden !important;
+  overscroll-behavior: none;
+}
+
+/* Mobile/tablet: HUD + texto fixos no topo da área visível acima do teclado */
 @media (max-width: 768px) {
   .qd-test-shell--mobile {
     transform: none !important;
-    max-height: var(--visual-viewport-height, 100dvh);
-    overflow: visible;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
     padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
   }
 
+  .qd-test-shell--mobile .qd-test-shell-controls--hidden,
+  .qd-test-shell--mobile .qd-test-hint--hidden {
+    display: none !important;
+  }
+
+  .qd-mobile-keyboard-focus {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .qd-mobile-keyboard-focus--active {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: var(--visual-viewport-offset-top, 0px);
+    width: 100%;
+    height: var(--visual-viewport-height, 50dvh);
+    max-height: var(--visual-viewport-height, 50dvh);
+    z-index: 45;
+    padding: 0.5rem 0.85rem 0.35rem;
+    box-sizing: border-box;
+    background: #ffffff;
+    overflow: hidden;
+    transform: none !important;
+  }
+
+  html.dark .qd-mobile-keyboard-focus--active,
+  .dark .qd-mobile-keyboard-focus--active {
+    background: #09090b;
+  }
+
+  .qd-mobile-keyboard-focus--active .qd-mobile-test-container {
+    width: min(92vw, 600px);
+    max-width: 600px;
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin: 0 auto;
+  }
+
+  .qd-mobile-keyboard-focus--active .qd-typing-area--mobile,
+  .qd-mobile-keyboard-focus--active .qd-typing-area--keyboard-open {
+    flex: 1 !important;
+    min-height: 0 !important;
+    height: auto !important;
+    max-height: 100% !important;
+    width: 100% !important;
+  }
+
   .qd-test-shell--mobile .qd-mobile-test-container {
-    width: min(90vw, 600px);
+    width: min(92vw, 600px);
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
-    position: relative;
-    transform: none !important;
-    flex-shrink: 0;
   }
 
-  .qd-test-shell--mobile .qd-typing-area--mobile {
-    height: var(--vh-adjusted, 50vh) !important;
-    min-height: min(var(--vh-adjusted, 50vh), 180px) !important;
-    max-height: var(--vh-adjusted, 50vh) !important;
-    width: 100% !important;
-    scroll-margin-top: 0.5rem;
-  }
-
-  .qd-test-shell--mobile.qd-test-shell--keyboard-open {
-    position: relative;
-    z-index: 40;
+  .qd-test-shell--mobile .qd-typing-area--mobile:not(.qd-typing-area--keyboard-open) {
+    min-height: 200px;
+    max-height: min(50vh, 360px);
   }
 
   .qd-typing-area {

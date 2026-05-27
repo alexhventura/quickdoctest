@@ -30,65 +30,66 @@ function TypingScreen({
     [targetText],
   );
 
-  const isMobilePhone = Boolean(deviceProfile?.isMobile);
   const isMobileLike = Boolean(deviceProfile?.isMobileLike);
-  const { keyboardOpen } = useMobileKeyboardOffset(isMobilePhone);
+  const { keyboardOpen } = useMobileKeyboardOffset(isMobileLike);
 
   useEffect(() => {
     if (!keyboardOpen) return;
     typingAreaRef?.current?.syncLayout?.();
   }, [keyboardOpen, typingAreaRef]);
 
+  const shellClass = [
+    'qd-test-shell',
+    focusMode ? 'qd-test-shell--active' : '',
+    isMobileLike ? 'qd-test-shell--mobile' : '',
+    keyboardOpen ? 'qd-test-shell--keyboard-open' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const focusClass = keyboardOpen
+    ? 'qd-mobile-keyboard-focus qd-mobile-keyboard-focus--active'
+    : 'qd-mobile-keyboard-focus';
+
   return (
-    <div
-      className={`qd-test-shell ${
-        focusMode ? 'qd-test-shell--active' : ''
-      } ${isMobileLike ? 'qd-test-shell--mobile' : ''}${
-        isMobileLike && keyboardOpen ? ' qd-test-shell--keyboard-open' : ''
-      }`}
-    >
-      {/* TIMER */}
-      <div className="flex flex-col items-center gap-1 mb-3">
-        <DurationSelector duration={duration} onSelect={onDurationChange} />
-        {textMeta && (
-          <p className="text-[10px] font-mono text-slate-600 dark:text-slate-400 tabular-nums">
-            {t(DURATION_SPECS[duration]?.labelKey)} · {textMeta.words} {t('textWords')} · {textMeta.chars} {t('textChars')}
-          </p>
-        )}
+    <div className={shellClass}>
+      <div className={`qd-test-shell-controls${keyboardOpen ? ' qd-test-shell-controls--hidden' : ''}`}>
+        <div className="flex flex-col items-center gap-1 mb-3">
+          <DurationSelector duration={duration} onSelect={onDurationChange} />
+          {textMeta && (
+            <p className="text-[10px] font-mono text-slate-600 dark:text-slate-400 tabular-nums">
+              {t(DURATION_SPECS[duration]?.labelKey)} · {textMeta.words} {t('textWords')} ·{' '}
+              {textMeta.chars} {t('textChars')}
+            </p>
+          )}
+        </div>
       </div>
 
-      {/* HUD */}
-      <TypingHUD
-        wpmRef={hudWpmRef}
-        accRef={hudAccRef}
-        timerRef={hudTimerRef}
-        labels={labels}
-        compact={isMobileLike}
-      />
-
-      {/* INPUT AREA (CORE) */}
-      <div className={`relative${isMobilePhone ? ' qd-mobile-test-container' : ''}`}>
-        <TypingArea
-          ref={typingAreaRef}
-          isDark={isDark}
-          isMobile={isMobilePhone}
-          keyboardOpen={keyboardOpen}
-          onNativeInput={onNativeInput}
-          onFocusArea={() => {
-            onFocusInputArea?.();
-            typingAreaRef.current?.focus?.();
-          }}
+      <div className={focusClass}>
+        <TypingHUD
+          wpmRef={hudWpmRef}
+          accRef={hudAccRef}
+          timerRef={hudTimerRef}
+          labels={labels}
+          compact={isMobileLike}
         />
 
-        {/* CURSOR FIX LAYER (IMPORTANTE PARA BUG VISUAL) */}
-        <div
-          className="qd-cursor-fix-layer"
-          aria-hidden="true"
-        />
+        <div className="qd-mobile-test-container">
+          <TypingArea
+            ref={typingAreaRef}
+            isDark={isDark}
+            isMobile={isMobileLike}
+            keyboardOpen={keyboardOpen}
+            onNativeInput={onNativeInput}
+            onFocusArea={() => {
+              onFocusInputArea?.();
+              typingAreaRef.current?.focus?.();
+            }}
+          />
+        </div>
       </div>
 
-      {/* HINT */}
-      <p className="qd-test-hint select-none">
+      <p className={`qd-test-hint select-none${keyboardOpen ? ' qd-test-hint--hidden' : ''}`}>
         {labels.tabHint}
       </p>
     </div>

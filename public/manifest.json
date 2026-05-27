@@ -1,26 +1,38 @@
 {
-  "name": "QuickDocTest — Professional Typing Speed Test",
+  "name": "QuickDocTest — Teste de Digitação",
   "short_name": "QuickDocTest",
-  "description": "Measure typing speed, accuracy and performance with internationally recognized metrics and digital certification.",
-  "start_url": "/en",
+  "description": "Teste de digitação no celular e desktop com métricas de velocidade, precisão e certificado digital.",
+  "start_url": "/pt",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "theme_color": "#1d4ed8",
   "background_color": "#f8fafc",
-  "lang": "en",
+  "lang": "pt",
   "icons": [
     {
-      "src": "/favicon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/favicon.png",
+      "sizes": "48x48",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/apple-touch-icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 
-const KEYBOARD_OPEN_THRESHOLD = 80;
+const KEYBOARD_OPEN_THRESHOLD = 72;
+
+function isCompactViewport() {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(max-width: 768px)').matches;
+}
 
 /**
- * Ajusta área visível do teste no mobile (~50% da viewport) sem translateY agressivo.
- * Desktop/tablet largo: no-op.
+ * Fixa HUD + área de digitação no topo da viewport visível quando o teclado abre (mobile/tablet).
  */
 export function useMobileKeyboardOffset(enabled) {
   const [keyboardOpen, setKeyboardOpen] = useState(false);
@@ -19,32 +23,66 @@ export function useMobileKeyboardOffset(enabled) {
       return undefined;
     }
 
+    const mq = window.matchMedia('(max-width: 768px)');
+    let scrollRaf = 0;
+
+    const syncScrollToVisibleTop = () => {
+      const top = Math.max(0, vv.offsetTop || 0);
+      window.scrollTo({ top, left: 0, behavior: 'instant' });
+    };
+
+    const setBodyLock = (open) => {
+      if (open) {
+        document.body.classList.add('qd-keyboard-open');
+        document.documentElement.classList.add('qd-keyboard-open');
+      } else {
+        document.body.classList.remove('qd-keyboard-open');
+        document.documentElement.classList.remove('qd-keyboard-open');
+      }
+    };
+
     const update = () => {
-      const vh = vv.height || window.innerHeight;
-      const halfViewport = Math.round(vh * 0.5);
-      const keyboardOffset = Math.max(0, window.innerHeight - vh - vv.offsetTop);
+      if (!mq.matches || !isCompactViewport()) {
+        setKeyboardOpen(false);
+        setBodyLock(false);
+        return;
+      }
 
-      document.documentElement.style.setProperty('--vh-adjusted', `${halfViewport}px`);
-      document.documentElement.style.setProperty('--visual-viewport-height', `${vh}px`);
-      document.documentElement.style.setProperty('--visual-viewport-offset-top', `${vv.offsetTop}px`);
-      document.documentElement.style.setProperty('--keyboard-offset', '0px');
+      const visibleHeight = vv.height || window.innerHeight;
+      const offsetTop = Math.max(0, vv.offsetTop || 0);
+      const keyboardOffset = Math.max(0, window.innerHeight - visibleHeight - offsetTop);
+      const open = keyboardOffset > KEYBOARD_OPEN_THRESHOLD;
 
-      setKeyboardOpen(keyboardOffset > KEYBOARD_OPEN_THRESHOLD);
+      document.documentElement.style.setProperty('--visual-viewport-height', `${visibleHeight}px`);
+      document.documentElement.style.setProperty('--visual-viewport-offset-top', `${offsetTop}px`);
+
+      setKeyboardOpen(open);
+      setBodyLock(open);
+
+      if (open) {
+        cancelAnimationFrame(scrollRaf);
+        scrollRaf = requestAnimationFrame(() => {
+          syncScrollToVisibleTop();
+          requestAnimationFrame(syncScrollToVisibleTop);
+        });
+      }
     };
 
     update();
     vv.addEventListener('resize', update);
     vv.addEventListener('scroll', update);
+    mq.addEventListener('change', update);
     window.addEventListener('orientationchange', update);
 
     return () => {
+      cancelAnimationFrame(scrollRaf);
       vv.removeEventListener('resize', update);
       vv.removeEventListener('scroll', update);
+      mq.removeEventListener('change', update);
       window.removeEventListener('orientationchange', update);
-      document.documentElement.style.removeProperty('--vh-adjusted');
+      setBodyLock(false);
       document.documentElement.style.removeProperty('--visual-viewport-height');
       document.documentElement.style.removeProperty('--visual-viewport-offset-top');
-      document.documentElement.style.removeProperty('--keyboard-offset');
       setKeyboardOpen(false);
     };
   }, [enabled]);

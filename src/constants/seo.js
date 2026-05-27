@@ -1,7 +1,7 @@
 export const SITE_URL = 'https://www.quickdoctest.com';
 export const SITE_NAME = 'QuickDocTest';
 export const SITE_CATEGORY = 'EducationalApplication';
-export const SITE_LOGO = `${SITE_URL}/favicon.svg`;
+export const SITE_LOGO = `${SITE_URL}/icons/icon-512.png`;
 
 export const DEFAULT_TITLE = 'Mobile Typing Speed Test | QuickDocTest - WPM & Accuracy';
 export const DEFAULT_DESCRIPTION =
