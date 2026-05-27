@@ -12,6 +12,15 @@ import { CERTIFICATE_SIZE } from '@/components/certificate/certificateTemplate';
 import { createPdfExportFrame, destroyPdfExportFrame } from '@/lib/pdfExportFrame';
 import { sanitizeCloneForPdfExport } from '@/lib/pdfColorSanitizer';
 
+/** A4 paisagem (mm) — alinhado ao layout 841×595 px do certificado. */
+const PDF_A4_LANDSCAPE_MM = { w: PAGE_MM.w, h: PAGE_MM.h };
+
+/**
+ * Escala de captura (somente export PDF — não altera layout/CSS do certificado).
+ * 3× ≈ ~2523×1785 px por página, adequado para impressão A4.
+ */
+const PDF_CAPTURE_SCALE = 3;
+
 function waitFrame() {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
@@ -98,7 +107,7 @@ async function mountExportCertificate({ user, results, copy, lang }) {
 
   await waitFrame();
   await waitFrame();
-  const layoutWait = isMobileExportDevice() ? 900 : 650;
+  const layoutWait = isMobileExportDevice() ? 1000 : 800;
   await waitMs(layoutWait);
 
   const container = mount.querySelector('#certificado-container');
@@ -129,31 +138,20 @@ function cleanupExportMount(root) {
   destroyPdfExportFrame();
 }
 
-/** Escala HD para exportação (2× mobile, 3× desktop — print-ready). */
-const PDF_CAPTURE_SCALE_MOBILE = 2;
-const PDF_CAPTURE_SCALE_DESKTOP = 3;
-
 function isMobileExportDevice() {
   if (typeof navigator === 'undefined') return false;
   return /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-}
-
-function getCaptureScale() {
-  return isMobileExportDevice() ? PDF_CAPTURE_SCALE_MOBILE : PDF_CAPTURE_SCALE_DESKTOP;
 }
 
 async function rasterizePageElement(pageEl) {
   const target = getPageCaptureTarget(pageEl);
   const doc = target.ownerDocument;
   const win = doc?.defaultView;
-  const scale = getCaptureScale();
 
   const canvas = await html2canvas(target, {
     window: win,
     backgroundColor: '#ffffff',
-    scale,
-    width: CERTIFICATE_SIZE.width,
-    height: CERTIFICATE_SIZE.height,
+    scale: PDF_CAPTURE_SCALE,
     useCORS: true,
     allowTaint: false,
     logging: false,
@@ -177,6 +175,16 @@ async function rasterizePageElement(pageEl) {
     throw new Error('Certificate page capture produced empty image');
   }
 
+  const minW = CERTIFICATE_SIZE.width * PDF_CAPTURE_SCALE * 0.9;
+  const minH = CERTIFICATE_SIZE.height * PDF_CAPTURE_SCALE * 0.9;
+  if (canvas.width < minW || canvas.height < minH) {
+    console.warn(
+      '[QuickDoc] Certificate capture below expected HD resolution:',
+      canvas.width,
+      canvas.height,
+    );
+  }
+
   return {
     dataUrl,
     format: dataUrl.startsWith('data:image/png') ? 'PNG' : 'JPEG',
@@ -191,10 +199,13 @@ async function buildPdfFromPages(pages) {
     compress: false,
   });
 
+  const pageW = Math.round(PDF_A4_LANDSCAPE_MM.w);
+  const pageH = Math.round(PDF_A4_LANDSCAPE_MM.h);
+
   for (let index = 0; index < pages.length; index += 1) {
     const { dataUrl, format } = await rasterizePageElement(pages[index]);
     if (index > 0) pdf.addPage('a4', 'landscape');
-    pdf.addImage(dataUrl, format, 0, 0, PAGE_MM.w, PAGE_MM.h, undefined, 'NONE');
+    pdf.addImage(dataUrl, format, 0, 0, pageW, pageH, undefined, 'NONE');
   }
 
   return pdf;
