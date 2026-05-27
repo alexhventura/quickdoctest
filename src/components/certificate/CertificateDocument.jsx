@@ -45,9 +45,9 @@ function MetricsCard({ metrics }) {
         width: cardWidth,
         maxWidth: '100%',
         borderRadius: 16,
-        backgroundColor: CERT_COLORS.cardBg,
-        border: `1px solid ${CERT_COLORS.cardBorder}`,
-        boxShadow: '0 10px 30px rgba(30,58,95,0.08)',
+        background: 'linear-gradient(135deg, rgba(15,23,42,0.86), rgba(15,23,42,0.55))',
+        border: '1px solid rgba(148,163,184,0.45)',
+        boxShadow: '0 12px 32px rgba(2,6,23,0.45)',
         overflow: 'hidden',
       }}
     >
@@ -57,8 +57,8 @@ function MetricsCard({ metrics }) {
           gridTemplateColumns: 'repeat(3, 1fr)',
           gap: 12,
           padding: '22px 26px',
-          backgroundColor: CERT_COLORS.heroBg,
-          borderBottom: `1px solid ${CERT_COLORS.cardBorder}`,
+          background: 'linear-gradient(135deg, rgba(30,41,59,0.75), rgba(15,23,42,0.45))',
+          borderBottom: '1px solid rgba(148,163,184,0.3)',
         }}
       >
         {metrics.hero.map((m) => (
@@ -66,10 +66,10 @@ function MetricsCard({ metrics }) {
             <div
               style={{
                 fontSize: CERT_TYPE.metricHeroLabel.size,
-                fontWeight: CERT_TYPE.metricHeroLabel.weight,
+                fontWeight: 800,
                 letterSpacing: '0.12em',
                 textTransform: 'uppercase',
-                color: CERT_COLORS.grayMid,
+                color: CERT_COLORS.white,
                 marginBottom: 8,
               }}
             >
@@ -79,8 +79,8 @@ function MetricsCard({ metrics }) {
             <div
               style={{
                 fontSize: CERT_TYPE.metricHeroValue.size,
-                fontWeight: CERT_TYPE.metricHeroValue.weight,
-                color: CERT_COLORS.navy,
+                fontWeight: 800,
+                color: CERT_COLORS.white,
                 lineHeight: 1,
               }}
             >
@@ -103,10 +103,10 @@ function MetricsCard({ metrics }) {
             <div
               style={{
                 fontSize: CERT_TYPE.metricSecLabel.size,
-                fontWeight: CERT_TYPE.metricSecLabel.weight,
+                fontWeight: 800,
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                color: CERT_COLORS.grayLight,
+                color: CERT_COLORS.white,
                 marginBottom: 4,
               }}
             >
@@ -116,8 +116,8 @@ function MetricsCard({ metrics }) {
             <div
               style={{
                 fontSize: CERT_TYPE.metricSecValue.size,
-                fontWeight: CERT_TYPE.metricSecValue.weight,
-                color: CERT_COLORS.grayDark,
+                fontWeight: 800,
+                color: CERT_COLORS.white,
               }}
             >
               {m.value}
@@ -129,7 +129,7 @@ function MetricsCard({ metrics }) {
   );
 }
 
-function InfoCards({ issuedOn, durationLabel, serial, validationHint }) {
+function InfoCards({ issuedOn, durationLabel, validationHint }) {
   const cardBase = {
     borderRadius: 12,
     padding: '10px 14px',
@@ -157,7 +157,8 @@ function InfoCards({ issuedOn, durationLabel, serial, validationHint }) {
             letterSpacing: '0.16em',
             textTransform: 'uppercase',
             color: CERT_COLORS.white,
-            opacity: 0.8,
+            opacity: 0.95,
+            fontWeight: 800,
           }}
         >
           Date
@@ -166,7 +167,7 @@ function InfoCards({ issuedOn, durationLabel, serial, validationHint }) {
           style={{
             marginTop: 4,
             fontSize: 13,
-            fontWeight: 600,
+            fontWeight: 800,
             color: CERT_COLORS.white,
           }}
         >
@@ -181,7 +182,8 @@ function InfoCards({ issuedOn, durationLabel, serial, validationHint }) {
             letterSpacing: '0.16em',
             textTransform: 'uppercase',
             color: CERT_COLORS.white,
-            opacity: 0.8,
+            opacity: 0.95,
+            fontWeight: 800,
           }}
         >
           Duration
@@ -190,7 +192,7 @@ function InfoCards({ issuedOn, durationLabel, serial, validationHint }) {
           style={{
             marginTop: 4,
             fontSize: 13,
-            fontWeight: 600,
+            fontWeight: 800,
             color: CERT_COLORS.white,
           }}
         >
@@ -205,32 +207,8 @@ function InfoCards({ issuedOn, durationLabel, serial, validationHint }) {
             letterSpacing: '0.16em',
             textTransform: 'uppercase',
             color: CERT_COLORS.white,
-            opacity: 0.8,
-          }}
-        >
-          Serial
-        </div>
-        <div
-          style={{
-            marginTop: 4,
-            fontSize: 13,
-            fontWeight: 700,
-            fontFamily: 'monospace',
-            color: CERT_COLORS.white,
-          }}
-        >
-          {serial}
-        </div>
-      </div>
-
-      <div style={cardBase}>
-        <div
-          style={{
-            fontSize: 10,
-            letterSpacing: '0.16em',
-            textTransform: 'uppercase',
-            color: CERT_COLORS.white,
-            opacity: 0.8,
+            opacity: 0.95,
+            fontWeight: 800,
           }}
         >
           Validation
@@ -239,7 +217,7 @@ function InfoCards({ issuedOn, durationLabel, serial, validationHint }) {
           style={{
             marginTop: 4,
             fontSize: 12,
-            fontWeight: 500,
+            fontWeight: 800,
             color: CERT_COLORS.white,
             opacity: 0.9,
           }}
@@ -252,33 +230,34 @@ function InfoCards({ issuedOn, durationLabel, serial, validationHint }) {
 }
 
 const CertificateDocument = forwardRef(function CertificateDocument(
-  { results, user },
+  { results, user, copy },
   ref,
 ) {
   const { t } = useI18n();
 
-  const displayName = user?.name || t('certAnonymous');
+  const displayName = user?.name || copy?.anonymous || t('certAnonymous');
 
-  const rankLabel = getCertificateRankLabel(results, t);
+  const rankLabel = copy?.rankLabel || getCertificateRankLabel(results, t);
 
   const nameSize = getCertificateNameSize(displayName);
 
-  const metrics = useMemo(
-    () =>
-      getCertificateMetrics(results, {
-        keystrokes: t('certLabelKeystrokes'),
-        errors: t('certLabelErrors'),
-        latency: t('certLabelLatency'),
-        consistency: t('certLabelConsistency'),
-        completion: t('certLabelCompletion'),
-      }),
-    [results, t],
-  );
+  const metrics = useMemo(() => {
+    if (copy?.metrics) return copy.metrics;
+    return getCertificateMetrics(results, {
+      keystrokes: t('certLabelKeystrokes'),
+      errors: t('certLabelErrors'),
+      latency: t('certLabelLatency'),
+      consistency: t('certLabelConsistency'),
+      completion: t('certLabelCompletion'),
+    });
+  }, [results, t, copy]);
 
   const serial = getCertificateSerial(results);
-  const issuedOn = t('certIssuedOn', { date: results.timestamp });
-  const durationLabel = t('testDurationLabel') + ` · ${results.testDuration || 30}s`;
-  const validationHint = 'Store this serial with your test ID to verify in the future.';
+  const issuedOn = copy?.issuedOn || t('certIssuedOn', { date: results.timestamp });
+  const durationLabel =
+    copy?.durationLabel || `${t('testDurationLabel')} · ${results.testDuration || 30}s`;
+  const validationHint =
+    copy?.validationHint || 'Store this serial with your test ID to verify in the future.';
 
   return (
     <div
@@ -332,7 +311,7 @@ const CertificateDocument = forwardRef(function CertificateDocument(
               color: CERT_COLORS.white,
             }}
           >
-            {t('certBrandTitle')}
+            {copy?.brandTitle || t('certBrandTitle')}
           </h1>
 
           <p
@@ -342,7 +321,7 @@ const CertificateDocument = forwardRef(function CertificateDocument(
               color: CERT_COLORS.white,
             }}
           >
-            {t('certTitle')}
+            {copy?.title || t('certTitle')}
           </p>
 
           <p
@@ -352,10 +331,11 @@ const CertificateDocument = forwardRef(function CertificateDocument(
               color: CERT_COLORS.white,
             }}
           >
-            {t('certStandard', {
-              duration: results.testDuration,
-              lang: t(`lang_${results.testLang}`),
-            })}
+            {copy?.standard ||
+              t('certStandard', {
+                duration: results.testDuration,
+                lang: t(`lang_${results.testLang}`),
+              })}
           </p>
         </header>
 
@@ -373,7 +353,7 @@ const CertificateDocument = forwardRef(function CertificateDocument(
               color: CERT_COLORS.white,
             }}
           >
-            {t('certSubtitle')}
+            {copy?.subtitle || t('certSubtitle')}
           </p>
 
           <h2
@@ -396,7 +376,7 @@ const CertificateDocument = forwardRef(function CertificateDocument(
               color: CERT_COLORS.white,
             }}
           >
-            {t('certRankLine', { rank: rankLabel })}
+            {copy?.rankLine || t('certRankLine', { rank: rankLabel })}
           </p>
 
           <div style={{ marginTop: 18 }}>
@@ -406,12 +386,22 @@ const CertificateDocument = forwardRef(function CertificateDocument(
 
         <MetricsCard metrics={metrics} />
 
-        <InfoCards
-          issuedOn={issuedOn}
-          durationLabel={durationLabel}
-          serial={serial}
-          validationHint={validationHint}
-        />
+        <InfoCards issuedOn={issuedOn} durationLabel={durationLabel} validationHint={validationHint} />
+
+        <div
+          style={{
+            marginTop: 2,
+            fontSize: 11,
+            fontWeight: 800,
+            color: CERT_COLORS.white,
+            opacity: 0.88,
+            letterSpacing: '0.12em',
+            fontFamily: 'monospace',
+            textTransform: 'uppercase',
+          }}
+        >
+          Serial {serial}
+        </div>
 
         <div
           style={{
@@ -423,7 +413,7 @@ const CertificateDocument = forwardRef(function CertificateDocument(
             textTransform: 'uppercase',
           }}
         >
-          {t('certSiteUrl')}
+          {copy?.siteUrl || t('certSiteUrl')}
         </div>
       </div>
     </div>

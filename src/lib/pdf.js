@@ -1,5 +1,5 @@
 /**
- * @deprecated Use @/lib/certificatePdf — geração nativa jsPDF (sem html2canvas).
+ * @deprecated Use @/lib/certificatePdf — exportação unificada da prévia via html2canvas + jsPDF.
  */
 export {
   downloadCertificatePdfFile as downloadCertificatePdf,

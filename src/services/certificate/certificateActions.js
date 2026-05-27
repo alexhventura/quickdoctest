@@ -7,6 +7,7 @@ import {
 } from '@/utils/certificate/certificateMetrics';
 
 export function buildCertificateCopy(t, results) {
+  const rankLabel = getCertificateRankLabel(results, t);
   return {
     brandTitle: t('certBrandTitle'),
     title: t('certTitle'),
@@ -15,7 +16,8 @@ export function buildCertificateCopy(t, results) {
       lang: t(`lang_${results.testLang}`),
     }),
     subtitle: t('certSubtitle'),
-    rankLine: t('certRankLine', { rank: getCertificateRankLabel(results, t) }),
+    rankLabel,
+    rankLine: t('certRankLine', { rank: rankLabel }),
     metricsTitle: t('certMetricsTitle'),
     metrics: getCertificateMetrics(results, {
       keystrokes: t('certLabelKeystrokes'),
@@ -27,6 +29,8 @@ export function buildCertificateCopy(t, results) {
     anonymous: t('certAnonymous'),
     auth: t('certAuth'),
     issuedOn: t('certIssuedOn', { date: results.timestamp || '—' }),
+    durationLabel: `${t('testDurationLabel')} · ${results.testDuration || 30}s`,
+    validationHint: 'Store this serial with your test ID to verify in the future.',
     siteUrl: t('certSiteUrl'),
   };
 }
