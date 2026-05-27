@@ -6,36 +6,36 @@ function MobileTypingSeoSection({ className = '' }) {
 
   return (
     <section
-      className={`mt-8 rounded-2xl border border-slate-200 dark:border-white/10 bg-white/80 dark:bg-zinc-900/60 p-5 sm:p-6 shadow-sm ${className}`}
+      className={`qd-mobile-seo mt-8 rounded-2xl border p-5 sm:p-6 shadow-sm ${className}`}
       aria-labelledby="mobile-typing-seo-title"
     >
       <h2
         id="mobile-typing-seo-title"
-        className="text-lg sm:text-xl font-bold text-slate-900 dark:text-zinc-100"
+        className="qd-mobile-seo__title text-lg sm:text-xl font-bold"
       >
         {t('seoMobileTitle')}
       </h2>
-      <p className="mt-2 text-sm font-medium text-blue-700 dark:text-blue-400">
+      <p className="qd-mobile-seo__lead mt-2 text-sm font-semibold">
         {t('seoMobileLead')}
       </p>
-      <p className="mt-3 text-sm leading-relaxed text-slate-600 dark:text-zinc-400">
+      <p className="qd-mobile-seo__body mt-3 text-sm leading-relaxed">
         {t('seoMobileBody')}
       </p>
-      <ul className="mt-4 grid gap-2 text-sm text-slate-600 dark:text-zinc-400 sm:grid-cols-2">
-        <li className="flex items-start gap-2">
-          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" aria-hidden />
+      <ul className="qd-mobile-seo__list mt-4 grid gap-2 text-sm sm:grid-cols-2">
+        <li className="qd-mobile-seo__item flex items-start gap-2">
+          <span className="qd-mobile-seo__bullet mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" aria-hidden />
           {t('seoMobileBullet1')}
         </li>
-        <li className="flex items-start gap-2">
-          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" aria-hidden />
+        <li className="qd-mobile-seo__item flex items-start gap-2">
+          <span className="qd-mobile-seo__bullet mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" aria-hidden />
           {t('seoMobileBullet2')}
         </li>
-        <li className="flex items-start gap-2">
-          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" aria-hidden />
+        <li className="qd-mobile-seo__item flex items-start gap-2">
+          <span className="qd-mobile-seo__bullet mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" aria-hidden />
           {t('seoMobileBullet3')}
         </li>
-        <li className="flex items-start gap-2">
-          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" aria-hidden />
+        <li className="qd-mobile-seo__item flex items-start gap-2">
+          <span className="qd-mobile-seo__bullet mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" aria-hidden />
           {t('seoMobileBullet4')}
         </li>
       </ul>

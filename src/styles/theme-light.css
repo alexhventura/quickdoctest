@@ -166,6 +166,61 @@ html:not(.dark) .qd-ad-popup-title {
   color: #1e40af;
 }
 
+/* Bloco informativo do teste de digitação (página inicial) */
+:root:not(.dark) .qd-mobile-seo,
+html:not(.dark) .qd-mobile-seo {
+  background: #ffffff !important;
+  border-color: rgb(30 64 175 / 0.14) !important;
+  box-shadow: 0 1px 3px rgb(15 23 42 / 0.06);
+}
+
+:root:not(.dark) .qd-mobile-seo__title,
+html:not(.dark) .qd-mobile-seo__title {
+  color: #0f2a6b !important;
+}
+
+:root:not(.dark) .qd-mobile-seo__lead,
+html:not(.dark) .qd-mobile-seo__lead {
+  color: #1e3a8a !important;
+}
+
+:root:not(.dark) .qd-mobile-seo__body,
+:root:not(.dark) .qd-mobile-seo__list,
+:root:not(.dark) .qd-mobile-seo__item,
+html:not(.dark) .qd-mobile-seo__body,
+html:not(.dark) .qd-mobile-seo__list,
+html:not(.dark) .qd-mobile-seo__item {
+  color: #1e40af !important;
+}
+
+:root:not(.dark) .qd-mobile-seo__bullet,
+html:not(.dark) .qd-mobile-seo__bullet {
+  background-color: #1e40af !important;
+}
+
+.dark .qd-mobile-seo {
+  background: rgb(24 24 27 / 0.6);
+  border-color: rgb(255 255 255 / 0.1);
+}
+
+.dark .qd-mobile-seo__title {
+  color: #f4f4f5;
+}
+
+.dark .qd-mobile-seo__lead {
+  color: #60a5fa;
+}
+
+.dark .qd-mobile-seo__body,
+.dark .qd-mobile-seo__list,
+.dark .qd-mobile-seo__item {
+  color: #a1a1aa;
+}
+
+.dark .qd-mobile-seo__bullet {
+  background-color: #3b82f6;
+}
+
 /* Título da tela de análise */
 :root:not(.dark) .qd-results-title,
 html:not(.dark) .qd-results-title {
