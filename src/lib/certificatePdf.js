@@ -175,32 +175,33 @@ async function buildPdfFromPages(pages) {
   return pdf;
 }
 
-export function getCertificateFileName(user, results) {
-  const slug = user?.name?.replace(/\s+/g, '_') || 'Participante';
-  return `Certificado_QUICKDOC_${slug}_${results?.testDuration || 30}s.pdf`;
+export const CERTIFICATE_DOWNLOAD_FILENAME = 'quickdoctest-certificado.pdf';
+
+export function getCertificateFileName() {
+  return CERTIFICATE_DOWNLOAD_FILENAME;
 }
 
-function triggerBlobDownload(blob, filename) {
-  const blobUrl = URL.createObjectURL(blob);
-
-  if (typeof navigator !== 'undefined' && typeof navigator.msSaveOrOpenBlob === 'function') {
-    navigator.msSaveOrOpenBlob(blob, filename);
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
-    return;
-  }
+/**
+ * Download robusto via Blob + URL.createObjectURL + <a download>.
+ * iOS Safari: fallback com window.open se o popup não for bloqueado.
+ */
+function savePdfBlobToDevice(blob, filename) {
+  const url = URL.createObjectURL(blob);
 
   const anchor = document.createElement('a');
-  anchor.href = blobUrl;
+  anchor.href = url;
   anchor.download = filename;
   anchor.rel = 'noopener';
-  anchor.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;';
+  anchor.style.display = 'none';
   document.body.appendChild(anchor);
   anchor.click();
+  anchor.remove();
 
-  setTimeout(() => {
-    anchor.remove();
-    URL.revokeObjectURL(blobUrl);
-  }, 60_000);
+  if (isIOSSafari()) {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export async function buildCertificatePdf({ user, results, copy, lang }) {
@@ -214,7 +215,7 @@ export async function buildCertificatePdf({ user, results, copy, lang }) {
 }
 
 export async function downloadCertificatePdfFile({ user, results, copy, lang }) {
-  const filename = getCertificateFileName(user, results);
+  const filename = getCertificateFileName();
   const { host, root, pages } = await mountExportCertificate({ user, results, copy, lang });
 
   try {
@@ -225,16 +226,7 @@ export async function downloadCertificatePdfFile({ user, results, copy, lang }) 
       throw new Error('Generated PDF is empty');
     }
 
-    if (isIOSSafari()) {
-      const blobUrl = URL.createObjectURL(blob);
-      const opened = window.open(blobUrl, '_blank', 'noopener,noreferrer');
-      if (!opened) {
-        triggerBlobDownload(blob, filename);
-      }
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000);
-    } else {
-      triggerBlobDownload(blob, filename);
-    }
+    savePdfBlobToDevice(blob, filename);
 
     return { ok: true };
   } finally {

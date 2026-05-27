@@ -69,7 +69,7 @@ export async function sendCertificateEmail({ user, results, lang, copy: copyPara
   const copy = copyParam || buildCertificateCopy(t, results);
   const issuedDate = formatIssuedDate(results.timestamp, lang);
   const validationUrl = generateValidationUrl(results, user);
-  const pdfFilename = getCertificateFileName(user, results);
+  const pdfFilename = getCertificateFileName();
 
   let pdfBase64 = '';
   try {
