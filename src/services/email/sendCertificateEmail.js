@@ -73,7 +73,7 @@ export async function sendCertificateEmail({ user, results, lang, copy: copyPara
 
   let pdfBase64 = '';
   try {
-    pdfBase64 = await getCertificatePdfBase64({ user, results, copy });
+    pdfBase64 = await getCertificatePdfBase64({ user, results, copy, lang });
   } catch (err) {
     console.error('[QuickDoc] Certificate PDF for email:', err);
   }

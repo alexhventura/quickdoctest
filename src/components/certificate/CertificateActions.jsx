@@ -216,7 +216,7 @@ function CertificateActions({
 
       if (pending.type === 'action') {
         if (pending.key === 'download') {
-          runAction('download', () => actionDownloadPdf({ user, results, copy }));
+          runAction('download', () => actionDownloadPdf({ user, results, copy, lang }));
         } else if (pending.key === 'email') {
           runAction('email', () => actionSendEmail({ user, results, lang, copy }));
         } else if (pending.key === 'share') {
@@ -264,7 +264,7 @@ function CertificateActions({
       hint: t('certActionDownloadHint'),
       onClick: () => {
         if (!requireAuth({ type: 'action', key: 'download' })) return;
-        runAction('download', () => actionDownloadPdf({ user, results, copy }));
+        runAction('download', () => actionDownloadPdf({ user, results, copy, lang }));
       },
     },
     {

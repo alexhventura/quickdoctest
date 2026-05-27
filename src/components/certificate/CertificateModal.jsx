@@ -5,10 +5,16 @@ import { useI18n } from '@/contexts/I18nContext';
 import { buildCertificateCopy } from '@/services/certificate/certificateCopy';
 import CertificateDocument, { A4_LANDSCAPE } from './CertificateDocument';
 import CertificateActions from './CertificateActions';
+import CertificatePreviewScaler from './CertificatePreviewScaler';
+import { buildCertificateTemplateModel, paginateCertificatePages } from './certificateTemplate';
 
 export default function CertificateModal({ results, user, lang, onClose }) {
   const { t } = useI18n();
   const copy = useMemo(() => buildCertificateCopy(t, results), [t, results]);
+  const pageCount = useMemo(
+    () => paginateCertificatePages(buildCertificateTemplateModel({ results, user, copy, t })).length,
+    [results, user, copy, t],
+  );
 
   useEffect(() => {
     document.body.style.overflow = 'hidden';
@@ -72,8 +78,10 @@ export default function CertificateModal({ results, user, lang, onClose }) {
           className="mb-4"
         />
 
-        <div className="bg-white shadow-2xl rounded-md border border-slate-300 overflow-x-auto overflow-y-visible mx-auto">
-          <CertificateDocument results={results} user={user} copy={copy} previewStacked />
+        <div className="bg-white shadow-2xl rounded-md border border-slate-300 p-3 sm:p-4 mx-auto w-full">
+          <CertificatePreviewScaler pageCount={pageCount}>
+            <CertificateDocument results={results} user={user} copy={copy} previewStacked />
+          </CertificatePreviewScaler>
         </div>
 
         <p className="text-center text-xs qd-light-muted mt-3">

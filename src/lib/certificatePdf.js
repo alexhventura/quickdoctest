@@ -2,6 +2,9 @@ import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import '@/i18n';
+import i18n from '@/i18n';
+import { I18nProvider } from '@/contexts/I18nContext';
 import CertificateDocument, { A4_LANDSCAPE } from '@/components/certificate/CertificateDocument';
 import { PAGE_MM } from '@/constants/certificateLayout';
 
@@ -31,7 +34,7 @@ async function waitImages(node) {
 }
 
 const CAPTURE_OPTS = {
-  backgroundColor: null,
+  backgroundColor: '#ffffff',
   scale: 2,
   useCORS: true,
   allowTaint: false,
@@ -45,12 +48,16 @@ const CAPTURE_OPTS = {
 };
 
 /**
- * Renderiza off-screen com o mesmo CertificateDocument usado na prévia.
+ * Renderiza off-screen com o mesmo CertificateDocument da prévia (dentro de I18nProvider).
  * Captura cada `.certificate-page` separadamente para paginação correta no PDF.
  */
-async function renderCertificatePagesToDataUrls({ user, results, copy }) {
+async function renderCertificatePagesToDataUrls({ user, results, copy, lang }) {
   if (typeof window === 'undefined') {
     throw new Error('Certificate export requires browser environment');
+  }
+
+  if (lang) {
+    await i18n.changeLanguage(lang);
   }
 
   document.getElementById('qd-pdf-capture-host')?.remove();
@@ -59,10 +66,12 @@ async function renderCertificatePagesToDataUrls({ user, results, copy }) {
   host.setAttribute('aria-hidden', 'true');
   host.style.cssText = [
     'position:fixed',
-    'left:0',
+    'left:-10000px',
     'top:0',
+    'width:' + A4_LANDSCAPE.width + 'px',
     'pointer-events:none',
-    'opacity:0',
+    'opacity:1',
+    'visibility:visible',
     'z-index:-1',
     'overflow:hidden',
   ].join(';');
@@ -71,7 +80,11 @@ async function renderCertificatePagesToDataUrls({ user, results, copy }) {
   const root = createRoot(host);
   try {
     root.render(
-      createElement(CertificateDocument, { results, user, copy, previewStacked: false }),
+      createElement(
+        I18nProvider,
+        null,
+        createElement(CertificateDocument, { results, user, copy, previewStacked: false }),
+      ),
     );
     await waitFrame();
     await waitFrame();
@@ -97,9 +110,9 @@ async function renderCertificatePagesToDataUrls({ user, results, copy }) {
   }
 }
 
-export async function buildCertificatePdf({ user, results, copy }) {
+export async function buildCertificatePdf({ user, results, copy, lang }) {
   const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
-  const pageImages = await renderCertificatePagesToDataUrls({ user, results, copy });
+  const pageImages = await renderCertificatePagesToDataUrls({ user, results, copy, lang });
 
   pageImages.forEach((imageData, index) => {
     if (index > 0) pdf.addPage('a4', 'landscape');
@@ -114,8 +127,8 @@ export function getCertificateFileName(user, results) {
   return `Certificado_QUICKDOC_${slug}_${results?.testDuration || 30}s.pdf`;
 }
 
-export async function downloadCertificatePdfFile({ user, results, copy }) {
-  const pdf = await buildCertificatePdf({ user, results, copy });
+export async function downloadCertificatePdfFile({ user, results, copy, lang }) {
+  const pdf = await buildCertificatePdf({ user, results, copy, lang });
   const filename = getCertificateFileName(user, results);
   const blob = pdf.output('blob');
   const blobUrl = URL.createObjectURL(blob);
@@ -148,12 +161,12 @@ export async function downloadCertificatePdfFile({ user, results, copy }) {
   return { ok: true };
 }
 
-export async function getCertificatePdfBlob({ user, results, copy }) {
-  return (await buildCertificatePdf({ user, results, copy })).output('blob');
+export async function getCertificatePdfBlob({ user, results, copy, lang }) {
+  return (await buildCertificatePdf({ user, results, copy, lang })).output('blob');
 }
 
-export async function getCertificatePdfBase64({ user, results, copy }) {
-  const blob = await getCertificatePdfBlob({ user, results, copy });
+export async function getCertificatePdfBase64({ user, results, copy, lang }) {
+  const blob = await getCertificatePdfBlob({ user, results, copy, lang });
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onloadend = () => {

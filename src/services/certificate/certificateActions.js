@@ -6,8 +6,8 @@ import { getCertificateRankLabel } from '@/utils/certificate/certificateMetrics'
 
 export { buildCertificateCopy };
 
-export async function actionDownloadPdf({ user, results, copy }) {
-  await downloadCertificatePdfFile({ user, results, copy });
+export async function actionDownloadPdf({ user, results, copy, lang }) {
+  await downloadCertificatePdfFile({ user, results, copy, lang });
   return { ok: true, action: 'download' };
 }
 
