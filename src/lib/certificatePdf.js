@@ -8,7 +8,6 @@ import qtLogoUrl from '@/assets/QT_V2.png';
 import { CertificateDocumentInner, A4_LANDSCAPE } from '@/components/certificate/CertificateDocument';
 import { buildCertificateTemplateModel } from '@/components/certificate/certificateTemplate';
 import { PAGE_MM } from '@/constants/certificateLayout';
-import { sanitizeCloneForPdfExport } from '@/lib/pdfColorSanitizer';
 import { createPdfExportFrame, destroyPdfExportFrame } from '@/lib/pdfExportFrame';
 
 function waitFrame() {
@@ -72,7 +71,7 @@ function getPageCaptureTarget(pageEl) {
 }
 
 /**
- * Monta certificado em iframe isolado — sem Tailwind/CSS global (lab/oklch).
+ * Monta certificado em iframe isolado com fonte Arial (html2canvas-safe).
  */
 async function mountExportCertificate({ user, results, copy, lang }) {
   const safeLang = lang || i18n.language || 'pt';
@@ -91,15 +90,13 @@ async function mountExportCertificate({ user, results, copy, lang }) {
       model,
       previewStacked: false,
       logoSrc,
+      forPdfExport: true,
     }),
   );
 
   await waitFrame();
   await waitFrame();
-  await waitMs(300);
-  if (mount.ownerDocument?.fonts?.ready) {
-    await mount.ownerDocument.fonts.ready;
-  }
+  await waitMs(500);
 
   const container = mount.querySelector('#certificado-container');
   if (!container) {
@@ -138,16 +135,9 @@ async function rasterizePageElement(pageEl) {
     useCORS: true,
     allowTaint: false,
     logging: false,
-    width: A4_LANDSCAPE.width,
-    height: A4_LANDSCAPE.height,
     scrollX: 0,
     scrollY: 0,
     imageTimeout: 20000,
-    windowWidth: A4_LANDSCAPE.width,
-    windowHeight: A4_LANDSCAPE.height,
-    onclone: (clonedDoc) => {
-      sanitizeCloneForPdfExport(clonedDoc, 'qd-pdf-capture-host');
-    },
   });
 
   let dataUrl = '';

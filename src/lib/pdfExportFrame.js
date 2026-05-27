@@ -7,8 +7,7 @@ function waitMs(ms) {
 }
 
 /**
- * Cria iframe isolado sem CSS do app (Tailwind/lab).
- * O certificado é renderizado apenas com estilos inline HEX/RGB.
+ * Iframe isolado para PDF — apenas CSS local + Arial (sem Google Fonts / Tailwind).
  */
 export async function createPdfExportFrame() {
   document.getElementById(FRAME_ID)?.remove();
@@ -43,17 +42,13 @@ export async function createPdfExportFrame() {
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" />
   <style data-qdf-keep="true">${PDF_EXPORT_BASE_CSS}</style>
 </head>
 <body></body>
 </html>`);
   doc.close();
 
-  await waitMs(50);
-  if (doc.fonts?.ready) {
-    await doc.fonts.ready;
-  }
+  await waitMs(80);
 
   const mount = doc.createElement('div');
   mount.id = 'qd-pdf-capture-host';

@@ -14,6 +14,8 @@ const COLOR_PROPERTIES = [
   'stroke',
 ];
 
+const FONT_STYLESHEET_HINT = /fonts\.googleapis\.com|fonts\.gstatic\.com/i;
+
 let colorNormalizeCanvas = null;
 
 function getColorNormalizeContext() {
@@ -49,13 +51,19 @@ export function normalizeCssColor(value, fallback = '#000000') {
   }
 }
 
+function shouldKeepStylesheet(node) {
+  if (node.getAttribute('data-qdf-keep') === 'true') return true;
+  const href = node.getAttribute('href') || '';
+  return FONT_STYLESHEET_HINT.test(href);
+}
+
 /**
  * Remove folhas de estilo globais (Tailwind/lab) do clone e força cores seguras.
- * Evita erro html2canvas: "unsupported color function 'lab'".
+ * Preserva Google Fonts — remover a folha da Inter quebra espaços no html2canvas.
  */
 export function sanitizeCloneForPdfExport(clonedDoc, rootId = 'qd-pdf-capture-host') {
   clonedDoc.querySelectorAll('link[rel="stylesheet"], style').forEach((node) => {
-    if (node.getAttribute('data-qdf-keep') !== 'true') {
+    if (!shouldKeepStylesheet(node)) {
       node.remove();
     }
   });
@@ -66,14 +74,24 @@ export function sanitizeCloneForPdfExport(clonedDoc, rootId = 'qd-pdf-capture-ho
   const view = clonedDoc.defaultView;
   if (!view) return;
 
+  const textStyleProps = ['font-family', 'font-size', 'font-weight', 'line-height'];
+
   const nodes = [root, ...root.querySelectorAll('*')];
   nodes.forEach((el) => {
     el.removeAttribute('class');
 
+    const computed = view.getComputedStyle(el);
+
+    textStyleProps.forEach((prop) => {
+      const val = computed.getPropertyValue(prop);
+      if (val) {
+        el.style.setProperty(prop, val);
+      }
+    });
+
     COLOR_PROPERTIES.forEach((prop) => {
-      const computed = view.getComputedStyle(el).getPropertyValue(prop);
       const inline = el.style.getPropertyValue(prop);
-      const raw = inline || computed;
+      const raw = inline || computed.getPropertyValue(prop);
       if (!raw) return;
 
       const safe = normalizeCssColor(raw);
@@ -82,7 +100,7 @@ export function sanitizeCloneForPdfExport(clonedDoc, rootId = 'qd-pdf-capture-ho
       }
     });
 
-    const boxShadow = el.style.boxShadow || view.getComputedStyle(el).boxShadow;
+    const boxShadow = el.style.boxShadow || computed.boxShadow;
     if (boxShadow && UNSUPPORTED_COLOR_FN.test(boxShadow)) {
       el.style.setProperty('box-shadow', 'none', 'important');
     }

@@ -11,7 +11,7 @@ import {
 export const A4_LANDSCAPE = CERTIFICATE_SIZE;
 
 export const CertificateDocumentInner = forwardRef(function CertificateDocumentInner(
-  { model, previewStacked = true, pageCount: pageCountProp, logoSrc = qtLogo },
+  { model, previewStacked = true, pageCount: pageCountProp, logoSrc = qtLogo, forPdfExport = false },
   ref,
 ) {
   const pageCount = pageCountProp ?? paginateCertificatePages(model).length;
@@ -31,7 +31,7 @@ export const CertificateDocumentInner = forwardRef(function CertificateDocumentI
         padding: 0,
       }}
     >
-      <CertificateTemplate model={model} logoSrc={logoSrc} />
+      <CertificateTemplate model={model} logoSrc={logoSrc} forPdfExport={forPdfExport} />
     </div>
   );
 });

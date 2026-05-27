@@ -1,5 +1,5 @@
 import { getCertificateMetricCards, getCertificateSerial } from '@/utils/certificate/certificateMetrics';
-import { PDF_COLORS, PDF_FONTS } from './certificatePdfStyles';
+import { PDF_COLORS, PDF_HEADER_TYPE, getCertificateFont } from './certificatePdfStyles';
 
 export const CERTIFICATE_SIZE = {
   width: 841,
@@ -19,7 +19,14 @@ const boundedText = {
   minWidth: 0,
   boxSizing: 'border-box',
   wordBreak: 'break-word',
-  overflowWrap: 'anywhere',
+  overflowWrap: 'break-word',
+};
+
+const headerText = {
+  ...boundedText,
+  wordBreak: 'normal',
+  overflowWrap: 'normal',
+  whiteSpace: 'normal',
 };
 
 function formatDate(value) {
@@ -189,7 +196,8 @@ function MetricCard({ value, label }) {
   );
 }
 
-function CertificatePageFrame({ children }) {
+function CertificatePageFrame({ children, forPdfExport = false }) {
+  const fontFamily = getCertificateFont(forPdfExport);
   return (
     <div
       style={{
@@ -198,7 +206,7 @@ function CertificatePageFrame({ children }) {
         position: 'relative',
         overflow: 'hidden',
         boxSizing: 'border-box',
-        fontFamily: PDF_FONTS.body,
+        fontFamily,
         background: `linear-gradient(145deg, ${PDF_COLORS.navy700} 0%, ${PDF_COLORS.navy600} 50%, ${PDF_COLORS.navy500} 100%)`,
       }}
     >
@@ -233,7 +241,15 @@ function CertificatePageFrame({ children }) {
 function FullHeader({ model, logoSrc }) {
   const { typeSizes: ts } = model;
   return (
-    <header style={{ textAlign: 'center', flexShrink: 0, paddingTop: 4 }}>
+    <header
+      style={{
+        textAlign: 'center',
+        flexShrink: 0,
+        paddingTop: 8,
+        paddingLeft: 72,
+        paddingRight: 72,
+      }}
+    >
       <img
         src={logoSrc}
         alt=""
@@ -250,60 +266,65 @@ function FullHeader({ model, logoSrc }) {
       <h1
         style={{
           margin: 0,
-          fontSize: 30,
-          fontWeight: 800,
+          fontSize: PDF_HEADER_TYPE.brand.fontSize,
+          fontWeight: PDF_HEADER_TYPE.brand.fontWeight,
           color: PDF_COLORS.slate900,
-          letterSpacing: '-0.02em',
-          lineHeight: 1.1,
-          ...boundedText,
+          letterSpacing: 'normal',
+          lineHeight: PDF_HEADER_TYPE.brand.lineHeight,
+          ...headerText,
         }}
       >
         {model.brandTitle}
       </h1>
       <p
         style={{
-          margin: '6px 0 0',
-          fontSize: 17,
-          fontWeight: 700,
+          margin: '10px 0 0',
+          fontSize: PDF_HEADER_TYPE.title.fontSize,
+          fontWeight: PDF_HEADER_TYPE.title.fontWeight,
           color: PDF_COLORS.slate800,
-          lineHeight: 1.15,
-          ...boundedText,
+          letterSpacing: 'normal',
+          lineHeight: PDF_HEADER_TYPE.title.lineHeight,
+          ...headerText,
         }}
       >
         {model.title}
       </p>
       <p
         style={{
-          margin: '6px 0 0',
+          margin: '10px 0 0',
           fontSize: ts.standard,
-          fontWeight: 600,
+          fontWeight: PDF_HEADER_TYPE.standard.fontWeight,
           color: PDF_COLORS.slate600,
-          lineHeight: 1.25,
-          ...boundedText,
+          letterSpacing: 'normal',
+          lineHeight: PDF_HEADER_TYPE.standard.lineHeight,
+          ...headerText,
         }}
       >
         {model.standard}
       </p>
       <p
         style={{
-          margin: '18px 0 0',
-          fontSize: 14,
-          fontWeight: 600,
+          margin: '20px 0 0',
+          fontSize: PDF_HEADER_TYPE.subtitle.fontSize,
+          fontWeight: PDF_HEADER_TYPE.subtitle.fontWeight,
           fontStyle: 'italic',
           color: PDF_COLORS.slate700,
-          ...boundedText,
+          letterSpacing: 'normal',
+          lineHeight: PDF_HEADER_TYPE.subtitle.lineHeight,
+          ...headerText,
         }}
       >
         {model.subtitle}
       </p>
       <h2
         style={{
-          margin: '10px 0 0',
+          margin: '14px 0 0',
           fontSize: ts.name,
-          fontWeight: 800,
+          fontWeight: PDF_HEADER_TYPE.name.fontWeight,
           color: PDF_COLORS.slate900,
-          lineHeight: 1.08,
-          ...boundedText,
+          letterSpacing: 'normal',
+          lineHeight: PDF_HEADER_TYPE.name.lineHeight,
+          ...headerText,
         }}
       >
         {model.name}
@@ -311,12 +332,13 @@ function FullHeader({ model, logoSrc }) {
       {model.email ? (
         <p
           style={{
-            margin: '4px 0 0',
+            margin: '8px 0 0',
             fontSize: ts.email,
-            fontWeight: 500,
+            fontWeight: PDF_HEADER_TYPE.email.fontWeight,
             color: PDF_COLORS.slate500,
-            lineHeight: 1.2,
-            ...boundedText,
+            letterSpacing: 'normal',
+            lineHeight: PDF_HEADER_TYPE.email.lineHeight,
+            ...headerText,
           }}
         >
           {model.email}
@@ -324,12 +346,13 @@ function FullHeader({ model, logoSrc }) {
       ) : null}
       <p
         style={{
-          margin: '10px 0 0',
-          fontSize: 14,
-          fontWeight: 700,
+          margin: '14px 0 0',
+          fontSize: PDF_HEADER_TYPE.rank.fontSize,
+          fontWeight: PDF_HEADER_TYPE.rank.fontWeight,
           color: PDF_COLORS.blue600,
-          lineHeight: 1.2,
-          ...boundedText,
+          letterSpacing: 'normal',
+          lineHeight: PDF_HEADER_TYPE.rank.lineHeight,
+          ...headerText,
         }}
       >
         {model.rankLine}
@@ -434,7 +457,7 @@ function PageFooter({ model }) {
   );
 }
 
-function CertificatePage({ model, page, logoSrc }) {
+function CertificatePage({ model, page, logoSrc, forPdfExport = false }) {
   const gridWidth = Math.min(CERT_INNER_WIDTH - 48, 720);
 
   return (
@@ -444,7 +467,7 @@ function CertificatePage({ model, page, logoSrc }) {
       data-total-pages={page.totalPages}
       style={{ flexShrink: 0 }}
     >
-      <CertificatePageFrame>
+      <CertificatePageFrame forPdfExport={forPdfExport}>
         <div
           style={{
             flex: 1,
@@ -488,13 +511,19 @@ function CertificatePage({ model, page, logoSrc }) {
   );
 }
 
-export function CertificateTemplate({ model, logoSrc }) {
+export function CertificateTemplate({ model, logoSrc, forPdfExport = false }) {
   const pages = paginateCertificatePages(model);
 
   return (
     <>
       {pages.map((page) => (
-        <CertificatePage key={page.pageNumber} model={model} page={page} logoSrc={logoSrc} />
+        <CertificatePage
+          key={page.pageNumber}
+          model={model}
+          page={page}
+          logoSrc={logoSrc}
+          forPdfExport={forPdfExport}
+        />
       ))}
     </>
   );
