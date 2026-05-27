@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 const KEYBOARD_OPEN_THRESHOLD = 80;
 
 /**
- * Ajusta --keyboard-offset via visualViewport (somente mobile).
- * Desktop: no-op, sem alterar CSS global.
+ * Ajusta área visível do teste no mobile (~50% da viewport) sem translateY agressivo.
+ * Desktop/tablet largo: no-op.
  */
 export function useMobileKeyboardOffset(enabled) {
   const [keyboardOpen, setKeyboardOpen] = useState(false);
@@ -20,11 +20,16 @@ export function useMobileKeyboardOffset(enabled) {
     }
 
     const update = () => {
-      const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-      document.documentElement.style.setProperty('--keyboard-offset', `${offset}px`);
-      document.documentElement.style.setProperty('--visual-viewport-height', `${vv.height}px`);
+      const vh = vv.height || window.innerHeight;
+      const halfViewport = Math.round(vh * 0.5);
+      const keyboardOffset = Math.max(0, window.innerHeight - vh - vv.offsetTop);
+
+      document.documentElement.style.setProperty('--vh-adjusted', `${halfViewport}px`);
+      document.documentElement.style.setProperty('--visual-viewport-height', `${vh}px`);
       document.documentElement.style.setProperty('--visual-viewport-offset-top', `${vv.offsetTop}px`);
-      setKeyboardOpen(offset > KEYBOARD_OPEN_THRESHOLD);
+      document.documentElement.style.setProperty('--keyboard-offset', '0px');
+
+      setKeyboardOpen(keyboardOffset > KEYBOARD_OPEN_THRESHOLD);
     };
 
     update();
@@ -36,9 +41,10 @@ export function useMobileKeyboardOffset(enabled) {
       vv.removeEventListener('resize', update);
       vv.removeEventListener('scroll', update);
       window.removeEventListener('orientationchange', update);
-      document.documentElement.style.removeProperty('--keyboard-offset');
+      document.documentElement.style.removeProperty('--vh-adjusted');
       document.documentElement.style.removeProperty('--visual-viewport-height');
       document.documentElement.style.removeProperty('--visual-viewport-offset-top');
+      document.documentElement.style.removeProperty('--keyboard-offset');
       setKeyboardOpen(false);
     };
   }, [enabled]);

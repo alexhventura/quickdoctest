@@ -164,5 +164,10 @@
   "faqMobileWpmQ": "¿Cómo medir la velocidad de mecanografía en el móvil?",
   "faqMobileWpmA": "Elige la duración, toca el área de texto y escribe con normalidad. El sistema calcula WPM neto, precisión, CPM y más en tiempo real.",
   "faqMobileCertQ": "¿Puedo obtener un certificado tras el test en el móvil?",
-  "faqMobileCertA": "Sí. Tras finalizar, inicia sesión con Google para descargar o enviar por correo tu certificado PDF A4 con tus métricas."
+  "faqMobileCertA": "Sí. Tras finalizar, inicia sesión con Google para descargar o enviar por correo tu certificado PDF A4 con tus métricas.",
+  "certDeviceUsed": "Dispositivo utilizado en el test: {{device}}",
+  "deviceType_desktop": "Desktop",
+  "deviceType_tablet": "Tablet",
+  "deviceType_mobile": "Móvil",
+  "deviceType_unknown": "No informado"
 }

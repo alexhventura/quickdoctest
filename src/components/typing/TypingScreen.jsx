@@ -30,8 +30,9 @@ function TypingScreen({
     [targetText],
   );
 
+  const isMobilePhone = Boolean(deviceProfile?.isMobile);
   const isMobileLike = Boolean(deviceProfile?.isMobileLike);
-  const { keyboardOpen } = useMobileKeyboardOffset(isMobileLike);
+  const { keyboardOpen } = useMobileKeyboardOffset(isMobilePhone);
 
   useEffect(() => {
     if (!keyboardOpen) return;
@@ -66,11 +67,11 @@ function TypingScreen({
       />
 
       {/* INPUT AREA (CORE) */}
-      <div className="relative">
+      <div className={`relative${isMobilePhone ? ' qd-mobile-test-container' : ''}`}>
         <TypingArea
           ref={typingAreaRef}
           isDark={isDark}
-          isMobile={isMobileLike}
+          isMobile={isMobilePhone}
           keyboardOpen={keyboardOpen}
           onNativeInput={onNativeInput}
           onFocusArea={() => {

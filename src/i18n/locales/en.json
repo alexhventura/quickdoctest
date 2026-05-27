@@ -164,5 +164,10 @@
   "faqMobileWpmQ": "How do I measure typing speed on my phone?",
   "faqMobileWpmA": "Pick a duration, tap the text area and type normally. The app calculates net WPM, accuracy, CPM and more in real time.",
   "faqMobileCertQ": "Can I get a certificate after a mobile typing test?",
-  "faqMobileCertA": "Yes. After finishing, sign in with Google to download or email your A4 PDF certificate with your metrics."
+  "faqMobileCertA": "Yes. After finishing, sign in with Google to download or email your A4 PDF certificate with your metrics.",
+  "certDeviceUsed": "Device used for the test: {{device}}",
+  "deviceType_desktop": "Desktop",
+  "deviceType_tablet": "Tablet",
+  "deviceType_mobile": "Mobile",
+  "deviceType_unknown": "Not specified"
 }

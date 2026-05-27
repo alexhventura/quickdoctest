@@ -164,5 +164,10 @@
   "faqMobileWpmQ": "Como medir velocidade de digitação no celular?",
   "faqMobileWpmA": "Escolha a duração, toque na área de texto e digite normalmente. O sistema calcula WPM líquido, precisão, CPM e outras métricas em tempo real.",
   "faqMobileCertQ": "Posso emitir certificado após o teste no mobile?",
-  "faqMobileCertA": "Sim. Após concluir o teste, faça login com Google e baixe ou envie o certificado PDF A4 com suas métricas."
+  "faqMobileCertA": "Sim. Após concluir o teste, faça login com Google e baixe ou envie o certificado PDF A4 com suas métricas.",
+  "certDeviceUsed": "Dispositivo utilizado no teste: {{device}}",
+  "deviceType_desktop": "Desktop",
+  "deviceType_tablet": "Tablet",
+  "deviceType_mobile": "Celular",
+  "deviceType_unknown": "Não informado"
 }

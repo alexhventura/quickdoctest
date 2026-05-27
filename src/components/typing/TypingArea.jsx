@@ -226,9 +226,7 @@ const TypingArea = memo(
       ensureCaretVisibility(index);
     }, [keyboardOpen, scheduleCaretUpdate, ensureCaretVisibility]);
 
-    const mobileHeight = keyboardOpen
-      ? 'calc(var(--visual-viewport-height, 100vh) - 12.5rem)'
-      : 'min(390px, calc(var(--visual-viewport-height, 100vh) - 16rem))';
+    const mobileHeight = 'var(--vh-adjusted, 50vh)';
 
     return (
       <div
@@ -244,7 +242,7 @@ const TypingArea = memo(
             width: 100% !important;
             max-width: 1000px !important;
             height: ${isMobile ? mobileHeight : '340px'} !important;
-            min-height: ${isMobile ? '160px' : '340px'} !important;
+            min-height: ${isMobile ? '180px' : '340px'} !important;
             overflow-y: ${isMobile ? 'auto' : 'hidden'} !important; 
             overflow-x: hidden !important;
             -webkit-overflow-scrolling: touch !important;

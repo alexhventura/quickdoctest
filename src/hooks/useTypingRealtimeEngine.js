@@ -13,6 +13,7 @@ import {
 } from '@/services/replay/keystrokeTimeline';
 import { sendCertificateEmail } from '@/services/email/sendCertificateEmail';
 import { fireConfetti } from '@/lib/confetti';
+import { getTestDeviceType } from '@/utils/device/getTestDeviceType';
 import { usePerformanceMetrics } from './usePerformanceMetrics';
 import { useRealtimeTimer } from './useRealtimeTimer';
 
@@ -47,6 +48,7 @@ export function useTypingRealtimeEngine({ lang, user, onEmailStatus, deviceProfi
   const hasFinishedRef = useRef(false);
   const loadingRafRef = useRef(null);
   const inputFocusTsRef = useRef(0);
+  const testDeviceTypeRef = useRef('desktop');
   const mobileSignalsRef = useRef({
     reactionMs: 0,
     autoCorrectCount: 0,
@@ -141,8 +143,8 @@ export function useTypingRealtimeEngine({ lang, user, onEmailStatus, deviceProfi
       elapsedMs,
       lang,
     });
+    finalResults.deviceType = testDeviceTypeRef.current;
     if (deviceProfile?.isMobileLike) {
-      finalResults.deviceType = deviceProfile.type;
       finalResults.mobileMetrics = {
         speed: finalResults.netWpm,
         touchAccuracy: finalResults.accuracy,
@@ -228,6 +230,7 @@ export function useTypingRealtimeEngine({ lang, user, onEmailStatus, deviceProfi
       swipeLikeCount: 0,
     };
     inputFocusTsRef.current = 0;
+    testDeviceTypeRef.current = getTestDeviceType();
 
     chartDataRef.current = [];
     inputLengthRef.current = 0;

@@ -286,21 +286,40 @@ html:not(.dark) .qd-duration-btn:hover {
   font-size: 0.72rem;
 }
 
-/* Mobile: reposiciona o teste acima do teclado virtual */
+/* Mobile: bloco do teste ~50% da viewport, centralizado, sem sair da tela */
 @media (max-width: 768px) {
   .qd-test-shell--mobile {
-    transform: translateY(calc(var(--keyboard-offset, 0px) * -1));
-    transition: transform 0.2s ease;
-    will-change: transform;
+    transform: none !important;
+    max-height: var(--visual-viewport-height, 100dvh);
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: max(0.5rem, env(safe-area-inset-top, 0px));
+  }
+
+  .qd-test-shell--mobile .qd-mobile-test-container {
+    width: min(90vw, 600px);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    position: relative;
+    transform: none !important;
+    flex-shrink: 0;
+  }
+
+  .qd-test-shell--mobile .qd-typing-area--mobile {
+    height: var(--vh-adjusted, 50vh) !important;
+    min-height: min(var(--vh-adjusted, 50vh), 180px) !important;
+    max-height: var(--vh-adjusted, 50vh) !important;
+    width: 100% !important;
+    scroll-margin-top: 0.5rem;
   }
 
   .qd-test-shell--mobile.qd-test-shell--keyboard-open {
     position: relative;
     z-index: 40;
-  }
-
-  .qd-test-shell--mobile .qd-typing-area--mobile {
-    scroll-margin-top: 0.5rem;
   }
 
   .qd-typing-area {
