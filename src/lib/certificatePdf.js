@@ -98,11 +98,7 @@ async function mountExportCertificate({ user, results, copy, lang }) {
 
   await waitFrame();
   await waitFrame();
-  const layoutWait = /Mobi|Android|iPhone|iPad/i.test(
-    typeof navigator !== 'undefined' ? navigator.userAgent : '',
-  )
-    ? 900
-    : 500;
+  const layoutWait = isMobileExportDevice() ? 900 : 650;
   await waitMs(layoutWait);
 
   const container = mount.querySelector('#certificado-container');
@@ -133,16 +129,24 @@ function cleanupExportMount(root) {
   destroyPdfExportFrame();
 }
 
-function getCaptureScale(win) {
-  const dpr = win?.devicePixelRatio || (typeof window !== 'undefined' ? window.devicePixelRatio : 1) || 1;
-  return Math.min(2, Math.max(1, dpr));
+/** Escala HD para exportação (2× mobile, 3× desktop — print-ready). */
+const PDF_CAPTURE_SCALE_MOBILE = 2;
+const PDF_CAPTURE_SCALE_DESKTOP = 3;
+
+function isMobileExportDevice() {
+  if (typeof navigator === 'undefined') return false;
+  return /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+}
+
+function getCaptureScale() {
+  return isMobileExportDevice() ? PDF_CAPTURE_SCALE_MOBILE : PDF_CAPTURE_SCALE_DESKTOP;
 }
 
 async function rasterizePageElement(pageEl) {
   const target = getPageCaptureTarget(pageEl);
   const doc = target.ownerDocument;
   const win = doc?.defaultView;
-  const scale = getCaptureScale(win);
+  const scale = getCaptureScale();
 
   const canvas = await html2canvas(target, {
     window: win,
@@ -164,9 +168,9 @@ async function rasterizePageElement(pageEl) {
 
   let dataUrl = '';
   try {
-    dataUrl = canvas.toDataURL('image/png');
+    dataUrl = canvas.toDataURL('image/png', 1);
   } catch {
-    dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    dataUrl = canvas.toDataURL('image/jpeg', 0.98);
   }
 
   if (!dataUrl || dataUrl.length < 200) {
@@ -180,12 +184,17 @@ async function rasterizePageElement(pageEl) {
 }
 
 async function buildPdfFromPages(pages) {
-  const pdf = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const pdf = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: 'a4',
+    compress: false,
+  });
 
   for (let index = 0; index < pages.length; index += 1) {
     const { dataUrl, format } = await rasterizePageElement(pages[index]);
     if (index > 0) pdf.addPage('a4', 'landscape');
-    pdf.addImage(dataUrl, format, 0, 0, PAGE_MM.w, PAGE_MM.h);
+    pdf.addImage(dataUrl, format, 0, 0, PAGE_MM.w, PAGE_MM.h, undefined, 'NONE');
   }
 
   return pdf;
